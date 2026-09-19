@@ -121,7 +121,7 @@ def cmd_run(args: argparse.Namespace) -> int:
         "concept_id": concept_id,
         "student_name": args.canned if args.stub else student_id,
         "text": initial_text,
-        "interactive": True if (not args.stub and args.text is None) else False,
+        "interactive": True if (not args.stub or getattr(args, "interactive", False)) else False,
     }
     run_id = store.create_run("feynman", meta=meta)
     store.append(
@@ -261,6 +261,7 @@ def main() -> int:
     # run command
     r = sub.add_parser("run", help="Run a Feynman Check session (live or stub)")
     r.add_argument("--stub", action="store_true", help="Use deterministic stubs (0 tokens, no key needed)")
+    r.add_argument("--interactive", "-i", action="store_true", help="Prompt interactively for revisions even in stub mode")
     r.add_argument("--concept", default="virtual_memory", help="Concept ID (e.g. virtual_memory, deadlocks)")
     r.add_argument("--student-id", default="20231035053", help="Student registration ID")
     r.add_argument("--text", default=None, help="Initial explanation text (skips interactive prompt)")

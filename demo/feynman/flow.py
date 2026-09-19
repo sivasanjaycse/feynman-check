@@ -33,6 +33,7 @@ Architectural Guarantees:
 from __future__ import annotations
 
 import json
+import textwrap
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any, Callable, Dict, List, Optional
@@ -275,14 +276,12 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
             # Need revision for the latest probe
             student_id = submissions[0].payload.get("student_id", "")
             student_name = meta.get("student_name") or student_id
-            canned = get_canned_student(student_name)
 
-            if canned and canned.get("revision_text"):
-                revision_text = canned["revision_text"]
-            elif meta.get("interactive"):
+            if meta.get("interactive"):
                 latest_p = probes[-1].payload.get("counter_example_scenario", "")
                 print(f"\n\033[35m+--- Socratic Counter-Probe -------------------------------------------+\033[0m")
-                print(f"\033[35m{latest_p}\033[0m")
+                for line in textwrap.wrap(latest_p, width=74):
+                    print(f"\033[35m|\033[0m {line}")
                 print(f"\033[35m+---------------------------------------------------------------------+\033[0m\n")
                 try:
                     revision_text = input("\033[1;36mHow do you revise your explanation? > \033[0m").strip()
@@ -291,14 +290,18 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
                 if not revision_text:
                     revision_text = "Student submitted empty revision."
             else:
-                # Check meta for a queued revision
-                queued_revisions = meta.get("revisions", [])
-                rev_idx = current_probe_count - 1
-                if rev_idx < len(queued_revisions):
-                    revision_text = queued_revisions[rev_idx]
+                canned = get_canned_student(student_name)
+                if canned and canned.get("revision_text"):
+                    revision_text = canned["revision_text"]
                 else:
-                    # In simulated or headless runs without interactive input, fall back to canned or empty
-                    revision_text = "Revised explanation acknowledging page table in RAM."
+                    # Check meta for a queued revision
+                    queued_revisions = meta.get("revisions", [])
+                    rev_idx = current_probe_count - 1
+                    if rev_idx < len(queued_revisions):
+                        revision_text = queued_revisions[rev_idx]
+                    else:
+                        # In simulated or headless runs without interactive input, fall back to canned or empty
+                        revision_text = "Revised explanation acknowledging page table in RAM."
 
             ctx.append(
                 "submission",
