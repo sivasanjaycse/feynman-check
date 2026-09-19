@@ -735,6 +735,20 @@ def evaluate_student_text(text: str, concept_id: str = "virtual_memory") -> Crit
             confidence=1.0,
         )
 
+    # 2b. Student meta-question / conversation history query detection
+    if any(q in t_lower for q in [
+        "first question", "what was the first", "what did you ask",
+        "repeat the question", "repeat question", "previous question",
+        "what was your question", "what was your first",
+    ]):
+        return CriticVerdict(
+            verdict="AMBIGUOUS",
+            detected_flaw_tag="STUDENT_META_QUERY",
+            flaw_explanation="Student asked a meta-question regarding previous dialogue or clarification.",
+            violates_invariant=False,
+            confidence=1.0,
+        )
+
     # 3. Static per-concept rules (fast path for known concepts)
     for rule in _CONCEPT_FALLACY_RULES.get(concept_id, []):
         if rule["check"](t_lower):
@@ -895,6 +909,18 @@ def generate_probe_for_flaw(
     if not flaw_tag:
         flaw_tag = "UNVERIFIED_EXPLANATION"
 
+    if flaw_tag == "STUDENT_META_QUERY":
+        from .flow import load_opening_question
+        op_q = load_opening_question(concept_id)
+        return ProbeMessage(
+            probe_id="probe_meta_query",
+            counter_example_scenario=(
+                f"The first question I asked was: \"{op_q}\" "
+                "How would you explain that in your own words?"
+            ),
+            target_invariant="OPENING_QUESTION",
+        )
+
     # 1. Static library lookup (best probe quality)
     if flaw_tag in _STATIC_PROBE_LIBRARY:
         return _STATIC_PROBE_LIBRARY[flaw_tag]
@@ -1000,7 +1026,7 @@ class StubCompleter:
             for m in messages:
                 content = m.get("content", "")
                 if "concept_id" in content:
-                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    m_cid = re.search(r'concept_id["\s:]+([a-z0-9_]+)', content)
                     if m_cid:
                         concept_id = m_cid.group(1)
                 # Also try extracting from GROUND TRUTH section header
@@ -1034,7 +1060,7 @@ class StubCompleter:
             for m in messages:
                 content = m.get("content", "")
                 if "concept_id" in content:
-                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    m_cid = re.search(r'concept_id["\s:]+([a-z0-9_]+)', content)
                     if m_cid:
                         concept_id = m_cid.group(1)
             # Detect flaw tag from messages (all known tags, dynamic)

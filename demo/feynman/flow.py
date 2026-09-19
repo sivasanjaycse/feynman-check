@@ -117,6 +117,27 @@ def load_prompt_template(name: str) -> str:
 # Message Builders
 # ---------------------------------------------------------------------------
 
+def format_dialogue_transcript(
+    submissions: List[Dict[str, Any]],
+    probes: List[Dict[str, Any]],
+    opening_question: Optional[str] = None,
+) -> str:
+    """Constructs a readable turn-by-turn dialogue transcript of the conversation
+    so both the Critic and Socratic Probe agents have complete memory of the session."""
+    lines = []
+    if opening_question and opening_question.strip():
+        lines.append(f"- Tutor (Opening Question): \"{opening_question.strip()}\"")
+
+    for i, sub in enumerate(submissions):
+        lines.append(f"- Student: \"{sub.get('text', '').strip()}\"")
+        if i < len(probes):
+            p_text = probes[i].get("counter_example_scenario", "").strip()
+            if p_text:
+                lines.append(f"- Tutor (Follow-up Question): \"{p_text}\"")
+
+    return "\n".join(lines)
+
+
 def build_critic_messages(
     concept_ground_truth: str,
     student_text: str,
@@ -124,6 +145,7 @@ def build_critic_messages(
     prior_verdicts: Optional[List[Dict[str, Any]]] = None,
     prior_probes: Optional[List[Dict[str, Any]]] = None,
     current_target_fallacy: Optional[str] = None,
+    conversation_history: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     """Builds prompt messages for the Critic evaluation step."""
     system_prompt = load_prompt_template("critic")
@@ -132,7 +154,9 @@ def build_critic_messages(
         f"### GROUND TRUTH CONCEPT INVARIANTS:\nconcept_id: {concept_id}\n{concept_ground_truth}",
     ]
 
-    if prior_verdicts and prior_probes:
+    if conversation_history and conversation_history.strip():
+        user_sections.append(f"### FULL CONVERSATION TRANSCRIPT (TURN-BY-TURN):\n{conversation_history.strip()}")
+    elif prior_verdicts and prior_probes:
         history_lines = []
         for i, (v, p) in enumerate(zip(prior_verdicts, prior_probes)):
             history_lines.append(
@@ -151,6 +175,7 @@ def build_critic_messages(
     user_sections.append(
         f"### STUDENT SUBMISSION TO EVALUATE:\n\"{student_text}\"\n\n"
         "Evaluate this submission against the ground truth invariants above. "
+        "If the student is asking a meta-question or asking about previous dialogue, follow Rule 6. "
         "Catch semantic conflations, missing distinctions, or violations of the stated invariants. "
         "Return a structured CriticVerdict."
     )
@@ -168,17 +193,32 @@ def build_probe_messages(
     concept_id: str = "oop_lecture_1",
     target_fallacy: Optional[str] = None,
     upcoming_fallacy_info: Optional[Dict[str, Any]] = None,
+    conversation_history: Optional[str] = None,
 ) -> List[Dict[str, str]]:
     """Builds prompt messages for the Socratic counter-example generator."""
     system_prompt = load_prompt_template("probe")
 
     is_mastered_transition = verdict.get("verdict") == "MASTERED"
+    is_meta_query = verdict.get("detected_flaw_tag") == "STUDENT_META_QUERY"
 
     user_sections = [
         f"### GROUND TRUTH CONCEPT INVARIANTS:\nconcept_id: {concept_id}\n{concept_ground_truth}",
     ]
 
-    if is_mastered_transition and upcoming_fallacy_info:
+    if conversation_history and conversation_history.strip():
+        user_sections.append(f"### FULL CONVERSATION TRANSCRIPT (TURN-BY-TURN):\n{conversation_history.strip()}")
+
+    if is_meta_query:
+        user_sections.append(
+            f"### STUDENT QUERY ABOUT DIALOGUE / META-QUESTION:\n\"{student_text}\"\n\n"
+            "The student is asking a question about the conversation history or previous questions.\n"
+            "Rules for your response (Rule 6):\n"
+            "1. In your first sentence, answer their query directly and accurately based on the FULL CONVERSATION TRANSCRIPT above.\n"
+            "   (For example, if they asked what the first question was, quote or state the opening question).\n"
+            "2. Then invite them to answer that question: 'Now, how would you explain that in your own words?'\n"
+            "3. Keep the total response under 60 words. Return a structured ProbeMessage."
+        )
+    elif is_mastered_transition and upcoming_fallacy_info:
         tag = upcoming_fallacy_info.get("tag") or target_fallacy or "NEXT_CONCEPT"
         title = upcoming_fallacy_info.get("title", tag)
         desc = upcoming_fallacy_info.get("derailment", "")
@@ -402,6 +442,15 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
         prior_verdicts = [v.payload for v in ctx.history("verdict")]
         prior_probes = [p.payload for p in ctx.history("probe")]
 
+        meta = ctx.store.meta(ctx.run_id)
+        opening_q = meta.get("opening_question") or load_opening_question(concept_id)
+        submissions = [s.payload for s in ctx.history("submission")]
+        dialogue = format_dialogue_transcript(
+            submissions=submissions,
+            probes=prior_probes,
+            opening_question=opening_q,
+        )
+
         # Call Critic agent
         messages = build_critic_messages(
             concept_ground_truth=ground_truth,
@@ -409,6 +458,7 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
             concept_id=concept_id,
             prior_verdicts=prior_verdicts,
             prior_probes=prior_probes,
+            conversation_history=dialogue,
         )
 
         verdict: CriticVerdict = call(
@@ -420,6 +470,10 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
         )
 
         ctx.append("verdict", verdict.model_dump(), produced_by="agent:critic")
+
+        # --------------------------------------------------------- Meta-Query Case
+        if verdict.detected_flaw_tag == "STUDENT_META_QUERY":
+            return SOCRATIC_PROBE
 
         # --------------------------------------------------------- Mastered Case
         if verdict.verdict == "MASTERED":
@@ -451,11 +505,22 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
         concept_id = latest_sub.get("concept_id", "oop_lecture_1") if latest_sub else "oop_lecture_1"
         ground_truth = load_concept_ground_truth(concept_id)
 
+        meta = ctx.store.meta(ctx.run_id)
+        opening_q = meta.get("opening_question") or load_opening_question(concept_id)
+        submissions = [s.payload for s in ctx.history("submission")]
+        prior_probes = [p.payload for p in ctx.history("probe")]
+        dialogue = format_dialogue_transcript(
+            submissions=submissions,
+            probes=prior_probes,
+            opening_question=opening_q,
+        )
+
         messages = build_probe_messages(
             concept_ground_truth=ground_truth,
             student_text=latest_sub.get("text", "") if latest_sub else "",
             verdict=latest_verdict or {},
             concept_id=concept_id,
+            conversation_history=dialogue,
         )
 
         probe: ProbeMessage = call(
@@ -573,6 +638,20 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
         prior_verdicts = [v.payload for v in ctx.history("verdict")]
         prior_probes = [p.payload for p in ctx.history("probe")]
 
+        meta = ctx.store.meta(ctx.run_id)
+        opening_q = meta.get("opening_question") or ctx.latest("opening_question")
+        if isinstance(opening_q, dict):
+            opening_q = opening_q.get("text")
+        if not opening_q:
+            opening_q = load_opening_question(concept_id)
+
+        submissions = [s.payload for s in ctx.history("submission")]
+        dialogue = format_dialogue_transcript(
+            submissions=submissions,
+            probes=prior_probes,
+            opening_question=opening_q,
+        )
+
         # Determine which fallacy was targeted for this submission
         # Submission 0 was tested on all_fallacies[0] (Opening Question)
         current_target_fallacy = all_fallacies[0]
@@ -586,6 +665,7 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
             prior_verdicts=prior_verdicts,
             prior_probes=prior_probes,
             current_target_fallacy=current_target_fallacy,
+            conversation_history=dialogue,
         )
 
         verdict: CriticVerdict = call(
@@ -597,6 +677,10 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
         )
 
         ctx.append("verdict", verdict.model_dump(), produced_by="agent:critic")
+
+        # --------------------------------------------------------- Meta-Query Case
+        if verdict.detected_flaw_tag == "STUDENT_META_QUERY":
+            return SOCRATIC_PROBE
 
         # Track which fallacies have been mastered so far
         all_verdicts = [v.payload for v in ctx.history("verdict")]
@@ -662,6 +746,20 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
         prior_probes = [p.payload for p in ctx.history("probe")]
         all_verdicts = [v.payload for v in ctx.history("verdict")]
 
+        meta = ctx.store.meta(ctx.run_id)
+        opening_q = meta.get("opening_question") or ctx.latest("opening_question")
+        if isinstance(opening_q, dict):
+            opening_q = opening_q.get("text")
+        if not opening_q:
+            opening_q = load_opening_question(concept_id)
+
+        submissions = [s.payload for s in ctx.history("submission")]
+        dialogue = format_dialogue_transcript(
+            submissions=submissions,
+            probes=prior_probes,
+            opening_question=opening_q,
+        )
+
         mastered_fallacies = []
         for i, v in enumerate(all_verdicts):
             target = all_fallacies[0]
@@ -690,6 +788,7 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
             concept_id=concept_id,
             target_fallacy=next_target_fallacy,
             upcoming_fallacy_info=upcoming_info,
+            conversation_history=dialogue,
         )
 
         probe: ProbeMessage = call(
