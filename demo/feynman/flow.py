@@ -279,6 +279,17 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
 
             if canned and canned.get("revision_text"):
                 revision_text = canned["revision_text"]
+            elif meta.get("interactive"):
+                latest_p = probes[-1].payload.get("counter_example_scenario", "")
+                print(f"\n\033[35m+--- Socratic Counter-Probe -------------------------------------------+\033[0m")
+                print(f"\033[35m{latest_p}\033[0m")
+                print(f"\033[35m+---------------------------------------------------------------------+\033[0m\n")
+                try:
+                    revision_text = input("\033[1;36mHow do you revise your explanation? > \033[0m").strip()
+                except (KeyboardInterrupt, EOFError):
+                    revision_text = "Student declined to revise."
+                if not revision_text:
+                    revision_text = "Student submitted empty revision."
             else:
                 # Check meta for a queued revision
                 queued_revisions = meta.get("revisions", [])
