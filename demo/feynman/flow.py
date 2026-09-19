@@ -258,9 +258,11 @@ def build_probe_messages(
             f"- Flaw Tag: {verdict.get('detected_flaw_tag')}\n"
             f"- Flaw Explanation: {verdict.get('flaw_explanation')}\n"
             f"- Confidence: {verdict.get('confidence')}",
-            "Generate a concrete edge-case counter-example probe that forces the student "
-            "to confront their faulty assumption without directly giving away the invariant. "
-            "Keep the response under 70 words. Return a structured ProbeMessage."
+            "Follow the 3-step Socratic rhythm:\n"
+            "1. ACKNOWLEDGE (Opening sentence): Reflectively acknowledge the student's thought or intuitive effort (e.g. 'I see where you are coming from...', 'Fair point on how classes define methods...'). Do not confirm it as technically correct, and do not say 'Actually, you are wrong'.\n"
+            "2. PIVOT (Middle sentence): Introduce a concrete programming scenario or tension where this assumption leads to an unexpected or contradictory result.\n"
+            "3. CHALLENGE (Closing sentence): Conclude with ONE focused diagnostic question inviting them to resolve the contradiction.\n"
+            "Keep the entire response between 45 and 80 words. Return a structured ProbeMessage."
         ])
 
     return [
