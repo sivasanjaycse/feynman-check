@@ -295,6 +295,60 @@ def cmd_list_concepts(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_discover_fallacies(args: argparse.Namespace) -> int:
+    """Runs the Fallacy Discovery Agent on a concept file."""
+    from demo.feynman.discover import discover_fallacies
+
+    concept_id = args.concept
+    print(f"\n{_c('=== Fallacy Discovery Agent ===', BOLD)}")
+    print(f"{_c('Concept:', DIM)} {BOLD}{concept_id}{RESET}")
+
+    if args.stub:
+        from demo.feynman.stub import StubCompleter
+        call = StubCompleter()
+        print(f"{_c('Mode:', DIM)} STUB (Offline, 0 tokens)")
+    else:
+        st = load_settings()
+        if not st.api_key:
+            print(_c("Error: No OPENROUTER_API_KEY found in .env.", RED))
+            print("Run with --stub to test without an API key.")
+            return 1
+        from slice.llm import complete as call
+        print(f"{_c('Mode:', DIM)} LIVE ({st.model})")
+
+    try:
+        result = discover_fallacies(
+            concept_id,
+            call=call,
+            force=args.force,
+            write=not args.dry_run,
+            db_path=args.db,
+        )
+    except FileNotFoundError as e:
+        print(_c(f"\nError: {e}", RED))
+        return 1
+    except Exception as e:
+        print(_c(f"\nError discovering fallacies: {e}", RED))
+        return 1
+
+    print(f"\n{_c('Discovered Fallacy Patterns:', GREEN)}")
+    for i, f in enumerate(result.fallacies, start=1):
+        print(f"\n  {_c(f'{i}. [{f.tag}]', AMBER)}")
+        print(f"     {_c('Description:', DIM)} {f.description}")
+        print(f"     {_c('Flawed claim:', DIM)} \"{f.example_claim}\"")
+        print(f"     {_c('Counter:', DIM)} {f.pedagogical_counter}")
+
+    if result.opening_question:
+        print(f"\n  {_c('Diagnostic Opening Question:', CYAN)} {result.opening_question}")
+
+    if args.dry_run:
+        print(f"\n{_c('[Dry Run] No files modified.', AMBER)}\n")
+    else:
+        print(f"\n{_c('[Saved] Fallacies successfully written to data/concepts/' + concept_id + '.md', GREEN)}\n")
+
+    return 0
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Socratic Feynman Check CLI — Concept-Agnostic Agent",
@@ -330,6 +384,18 @@ def main() -> int:
     # list-concepts command
     lc = sub.add_parser("list-concepts", help="List all available concept files in data/concepts/")
     lc.set_defaults(fn=cmd_list_concepts)
+
+    # discover-fallacies command (Fallacy Discovery Agent)
+    df = sub.add_parser("discover-fallacies", help="Run the Fallacy Discovery Agent on a concept file")
+    df.add_argument("--concept", required=True,
+                    help="Concept ID (e.g., oop_lecture_1)")
+    df.add_argument("--stub", action="store_true",
+                    help="Use stub (offline, 0 tokens, no API call)")
+    df.add_argument("--force", action="store_true",
+                    help="Force re-discovery and overwrite existing Section 2")
+    df.add_argument("--dry-run", action="store_true",
+                    help="Show discovered fallacies without modifying the file")
+    df.set_defaults(fn=cmd_discover_fallacies)
 
     args = parser.parse_args()
     return args.fn(args)

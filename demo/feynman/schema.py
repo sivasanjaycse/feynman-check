@@ -121,3 +121,25 @@ class StudentSubmission(BaseModel):
     concept_id: str
     text: str
     iteration: int = Field(default=0, ge=0, le=2)
+
+
+class DiscoveredFallacy(BaseModel):
+    """A single fallacy pattern discovered by the Fallacy Discovery Agent."""
+
+    tag: str = Field(description="UPPER_SNAKE_CASE fallacy tag, e.g. CLASS_IS_AN_OBJECT")
+    description: str = Field(description="1-2 sentence description of the misconception")
+    example_claim: str = Field(description="Example flawed student claim, in quotes")
+    pedagogical_counter: str = Field(
+        description="Socratic counter-argument that exposes the flaw without giving the answer"
+    )
+
+
+class ConceptFallacies(BaseModel):
+    """Output of the Fallacy Discovery Agent: all discovered fallacies for a concept."""
+
+    concept_id: str
+    fallacies: List[DiscoveredFallacy] = Field(min_length=1, max_length=5)
+    opening_question: Optional[str] = Field(
+        default=None,
+        description="A diagnostic opening question for the Socratic chat",
+    )

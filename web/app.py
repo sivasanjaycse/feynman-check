@@ -410,3 +410,41 @@ def api_instructor():
         "threshold": 3,
     })
 
+
+@app.post("/api/discover-fallacies")
+async def api_discover_fallacies(request: Request):
+    """
+    Triggers the Fallacy Discovery Agent for a concept markdown file.
+    Payload: {"concept_id": "oop_lecture_1", "force": false, "write": true}
+    """
+    body = await request.json()
+    concept_id = body.get("concept_id", "").strip()
+    force = bool(body.get("force", False))
+    write = bool(body.get("write", True))
+
+    if not concept_id:
+        return JSONResponse({"error": "concept_id is required"}, status_code=400)
+
+    from demo.feynman.discover import discover_fallacies
+
+    st = load_settings()
+    try:
+        result = discover_fallacies(
+            concept_id,
+            settings=st,
+            force=force,
+            write=write,
+            db_path=DB_PATH,
+        )
+        return JSONResponse({
+            "concept_id": result.concept_id,
+            "fallacies": [f.model_dump() for f in result.fallacies],
+            "opening_question": result.opening_question,
+            "status": "success",
+        })
+    except FileNotFoundError as e:
+        return JSONResponse({"error": str(e)}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": str(e)}, status_code=500)
+
+
