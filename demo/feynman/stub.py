@@ -735,6 +735,20 @@ def evaluate_student_text(text: str, concept_id: str = "virtual_memory") -> Crit
             confidence=1.0,
         )
 
+    # 2b. Student meta-question / conversation history query detection
+    if any(q in t_lower for q in [
+        "first question", "what was the first", "what did you ask",
+        "repeat the question", "repeat question", "previous question",
+        "what was your question", "what was your first",
+    ]):
+        return CriticVerdict(
+            verdict="AMBIGUOUS",
+            detected_flaw_tag="STUDENT_META_QUERY",
+            flaw_explanation="Student asked a meta-question regarding previous dialogue or clarification.",
+            violates_invariant=False,
+            confidence=1.0,
+        )
+
     # 3. Static per-concept rules (fast path for known concepts)
     for rule in _CONCEPT_FALLACY_RULES.get(concept_id, []):
         if rule["check"](t_lower):
@@ -874,6 +888,33 @@ _STATIC_PROBE_LIBRARY: Dict[str, ProbeMessage] = {
         ),
         target_invariant="General: Conceptual Verification Required",
     ),
+    "CLASS_IS_AN_OBJECT": ProbeMessage(
+        probe_id="probe_oop_class_object_1",
+        counter_example_scenario=(
+            "I see your line of thought — both classes and objects describe state and behavior. "
+            "But consider what happens in memory: if class Dog were already an object on the heap, "
+            "how many actual dogs exist in memory before you ever execute new Dog()?"
+        ),
+        target_invariant="OOP Lecture 1: Invariant 1 - Class vs Object",
+    ),
+    "CONSTRUCTOR_IS_A_METHOD": ProbeMessage(
+        probe_id="probe_oop_constructor_1",
+        counter_example_scenario=(
+            "Fair point that constructors define executable instructions like methods do. "
+            "However, think about how it is called: if constructors were regular methods, "
+            "what would Dog d = d.Dog() return? Why does the compiler reject calling a constructor on an existing object?"
+        ),
+        target_invariant="OOP Lecture 1: Invariant 2 - Constructor Semantics",
+    ),
+    "STATIC_MEANS_CONSTANT": ProbeMessage(
+        probe_id="probe_oop_static_1",
+        counter_example_scenario=(
+            "I understand the intuition — 'static' sounds like something fixed in place. "
+            "But consider running `static int count = 0; count++;` in your code. "
+            "Why does this compile and increment cleanly if static meant immutable?"
+        ),
+        target_invariant="OOP Lecture 1: Invariant 3 - Static Members",
+    ),
 }
 
 
@@ -895,6 +936,18 @@ def generate_probe_for_flaw(
     if not flaw_tag:
         flaw_tag = "UNVERIFIED_EXPLANATION"
 
+    if flaw_tag == "STUDENT_META_QUERY":
+        from .flow import load_opening_question
+        op_q = load_opening_question(concept_id)
+        return ProbeMessage(
+            probe_id="probe_meta_query",
+            counter_example_scenario=(
+                f"The first question I asked was: \"{op_q}\" "
+                "How would you explain that in your own words?"
+            ),
+            target_invariant="OPENING_QUESTION",
+        )
+
     # 1. Static library lookup (best probe quality)
     if flaw_tag in _STATIC_PROBE_LIBRARY:
         return _STATIC_PROBE_LIBRARY[flaw_tag]
@@ -906,8 +959,9 @@ def generate_probe_for_flaw(
         return ProbeMessage(
             probe_id=f"probe_{concept_id}_{flaw_tag.lower()}_1",
             counter_example_scenario=(
-                f"Consider this: {counter_text} "
-                f"Can you trace through the correct sequence of events step by step?"
+                f"I see where you're coming from with that thought. "
+                f"Let's test it with a quick scenario: {counter_text} "
+                f"How does this distinction change your explanation?"
             ),
             target_invariant=f"{concept_id.replace('_', ' ').title()}: {flaw_tag.replace('_', ' ').title()}",
         )
@@ -1000,7 +1054,7 @@ class StubCompleter:
             for m in messages:
                 content = m.get("content", "")
                 if "concept_id" in content:
-                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    m_cid = re.search(r'concept_id["\s:]+([a-z0-9_]+)', content)
                     if m_cid:
                         concept_id = m_cid.group(1)
                 # Also try extracting from GROUND TRUTH section header
@@ -1034,15 +1088,22 @@ class StubCompleter:
             for m in messages:
                 content = m.get("content", "")
                 if "concept_id" in content:
-                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    m_cid = re.search(r'concept_id["\s:]+([a-z0-9_]+)', content)
                     if m_cid:
                         concept_id = m_cid.group(1)
             # Detect flaw tag from messages (all known tags, dynamic)
+            # Detect flaw tag from messages (extract from Critic Diagnosis section)
             flaw_tag = None
-            for tag in list(_STATIC_PROBE_LIBRARY.keys()):
-                if tag in combined_text:
-                    flaw_tag = tag
-                    break
+            if "STUDENT QUERY ABOUT DIALOGUE" in combined_text:
+                flaw_tag = "STUDENT_META_QUERY"
+            else:
+                m_tag = re.search(r'-\s*Flaw Tag:\s*([A-Z0-9_]+)', combined_text)
+                if m_tag:
+                    flaw_tag = m_tag.group(1)
+            if not flaw_tag:
+                m_target = re.search(r'Target Fallacy to test:\s*`?([A-Z0-9_]+)`?', combined_text)
+                if m_target:
+                    flaw_tag = m_target.group(1)
             if not flaw_tag:
                 verdict = evaluate_student_text(combined_text, concept_id=concept_id)
                 flaw_tag = verdict.detected_flaw_tag

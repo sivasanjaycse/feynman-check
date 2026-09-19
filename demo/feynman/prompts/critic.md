@@ -41,3 +41,14 @@ Your goal is to evaluate a student's explanation against the supplied Ground Tru
    - If the student has correctly addressed a previously detected flaw in a revision round, that counts as MASTERED for that invariant.
    - When in doubt between MASTERED and AMBIGUOUS, lean toward MASTERED if the key concept is present.
 
+6. HANDLING META-QUESTIONS & CONVERSATIONAL INQUIRIES:
+   - If the student asks a question about the conversation history, previous questions, or requests clarification (e.g., "what was the first question?", "can you repeat the question?", "what did you ask?"):
+   - Do NOT treat this as a conceptual misconception or adversarial attack.
+   - Return:
+     verdict: "AMBIGUOUS"
+     violates_invariant: false
+     detected_flaw_tag: "STUDENT_META_QUERY"
+     flaw_explanation: "The student asked a meta-question regarding previous dialogue or clarification."
+     confidence: 1.0
+
+

@@ -218,6 +218,7 @@ async def chat_api(request: Request):
     try:
         if not session_id:
             # --- First message: create a new run ---
+            opening_q = load_opening_question(lecture_id)
             session_id = store.create_run(
                 domain="feynman_chat",
                 meta={
@@ -225,8 +226,13 @@ async def chat_api(request: Request):
                     "student_name": student["name"],
                     "concept_id": lecture_id,
                     "lecture_id": lecture_id,
+                    "opening_question": opening_q,
                 },
             )
+            store.append(session_id, "opening_question", {
+                "text": opening_q,
+                "lecture_id": lecture_id,
+            }, produced_by="system:opening")
 
         # Append the student's message to the store
         store.append(session_id, "chat_message", {
