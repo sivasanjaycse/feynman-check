@@ -1,0 +1,62 @@
+[
+  {
+    "id": "oop_lecture_1",
+    "num": 1,
+    "title": "Classes & Objects",
+    "desc": "Class vs object, constructors, the this/self reference"
+  },
+  {
+    "id": "oop_lecture_2",
+    "num": 2,
+    "title": "Encapsulation & Access Modifiers",
+    "desc": "Private, protected, public, getters/setters, information hiding"
+  },
+  {
+    "id": "oop_lecture_3",
+    "num": 3,
+    "title": "Inheritance — IS-A vs HAS-A",
+    "desc": "Inheritance, composition, Liskov Substitution, tight vs loose coupling"
+  },
+  {
+    "id": "oop_lecture_4",
+    "num": 4,
+    "title": "Polymorphism",
+    "desc": "Overloading vs overriding, dynamic dispatch, reference vs object type"
+  },
+  {
+    "id": "oop_lecture_5",
+    "num": 5,
+    "title": "Abstract Classes & Interfaces",
+    "desc": "Abstract classes, interface contracts, multiple inheritance via interfaces"
+  },
+  {
+    "id": "oop_lecture_6",
+    "num": 6,
+    "title": "Exception Handling",
+    "desc": "try-catch-finally, checked vs unchecked, throw vs throws"
+  },
+  {
+    "id": "oop_lecture_7",
+    "num": 7,
+    "title": "SOLID Principles",
+    "desc": "SRP, OCP, DIP, God class anti-pattern, favour composition"
+  },
+  {
+    "id": "live_test_binary_search_trees",
+    "num": 8,
+    "title": "Live Test: Binary Search Trees",
+    "desc": "BST invariants and AVL balancing"
+  },
+  {
+    "id": "live_test_binary_search_trees_2",
+    "num": 9,
+    "title": "Live Test: Binary Search Trees",
+    "desc": "BST invariants and AVL balancing"
+  },
+  {
+    "id": "encapsulation_mitlecture",
+    "num": 10,
+    "title": "encapsulation_MITlecture",
+    "desc": "Encapsulationis anObject Oriented Prog ramming conceptthat binds tog ether the data and functions"
+  }
+]

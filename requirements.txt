@@ -6,5 +6,7 @@ fastembed>=0.4         # local embeddings - no API key, no rate limit
 fastapi>=0.115         # the expert callback form
 uvicorn>=0.30          # serves it
 python-multipart>=0.0.5 # form data for FastAPI login
+pypdf>=4.0                # PDF text extraction
+python-pptx>=0.6          # PPTX text extraction
 # dev
 pytest>=8.0

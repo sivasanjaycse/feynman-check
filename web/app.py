@@ -15,7 +15,7 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
 
-from fastapi import FastAPI, Form, Request, Response
+from fastapi import FastAPI, File, Form, Request, Response, UploadFile
 from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -50,6 +50,9 @@ TEMPLATES_DIR = Path(__file__).parent / "templates"
 # Instructor PIN — set INSTRUCTOR_PIN in .env for production; default is for demo only
 INSTRUCTOR_PIN = os.environ.get("INSTRUCTOR_PIN", "feynman2024")
 
+# Lectures registry — dynamic, read from data/lectures_registry.json
+LECTURES_REGISTRY = ROOT / "data" / "lectures_registry.json"
+
 app = FastAPI(title="Feynman Check — OOP Revision Demo")
 
 # Mount static files
@@ -71,18 +74,22 @@ DEMO_STUDENTS: Dict[str, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# Lecture Metadata
+# Lecture Metadata — dynamic, loaded from data/lectures_registry.json
 # ---------------------------------------------------------------------------
 
-LECTURES = [
-    {"id": "oop_lecture_1", "num": 1, "title": "Classes & Objects", "desc": "Class vs object, constructors, the this/self reference"},
-    {"id": "oop_lecture_2", "num": 2, "title": "Encapsulation & Access Modifiers", "desc": "Private, protected, public, getters/setters, information hiding"},
-    {"id": "oop_lecture_3", "num": 3, "title": "Inheritance — IS-A vs HAS-A", "desc": "Inheritance, composition, Liskov Substitution, tight vs loose coupling"},
-    {"id": "oop_lecture_4", "num": 4, "title": "Polymorphism", "desc": "Overloading vs overriding, dynamic dispatch, reference vs object type"},
-    {"id": "oop_lecture_5", "num": 5, "title": "Abstract Classes & Interfaces", "desc": "Abstract classes, interface contracts, multiple inheritance via interfaces"},
-    {"id": "oop_lecture_6", "num": 6, "title": "Exception Handling", "desc": "try-catch-finally, checked vs unchecked, throw vs throws"},
-    {"id": "oop_lecture_7", "num": 7, "title": "SOLID Principles", "desc": "SRP, OCP, DIP, God class anti-pattern, favour composition"},
-]
+def load_lectures() -> list[Dict]:
+    """Load lectures from the registry JSON. Falls back to empty list on error."""
+    if LECTURES_REGISTRY.exists():
+        try:
+            return json.loads(LECTURES_REGISTRY.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return []
+
+
+def _get_lecture(lecture_id: str) -> Optional[Dict]:
+    """Look up a single lecture by id from the registry."""
+    return next((l for l in load_lectures() if l["id"] == lecture_id), None)
 
 
 def _store() -> Store:
@@ -187,9 +194,9 @@ def dashboard(request: Request):
     html = html.replace("{{STUDENT_NAME}}", student["name"])
     html = html.replace("{{STUDENT_ROLL}}", student["roll"])
 
-    # Build lecture cards
+    # Build lecture cards from dynamic registry
     cards_html = ""
-    for lec in LECTURES:
+    for lec in load_lectures():
         cards_html += f"""
         <a href="/chat/{lec['id']}" class="lecture-card" id="card-{lec['id']}">
             <div class="lecture-num">Lecture {lec['num']}</div>
@@ -212,8 +219,8 @@ def chat_page(lecture_id: str, request: Request):
     if not student:
         return RedirectResponse("/", status_code=303)
 
-    # Find lecture info
-    lecture = next((l for l in LECTURES if l["id"] == lecture_id), None)
+    # Find lecture info from dynamic registry
+    lecture = _get_lecture(lecture_id)
     if not lecture:
         return RedirectResponse("/dashboard", status_code=303)
 
@@ -498,5 +505,81 @@ async def api_discover_fallacies(request: Request):
         return JSONResponse({"error": str(e)}, status_code=404)
     except Exception as e:
         return JSONResponse({"error": str(e)}, status_code=500)
+
+
+# ---------------------------------------------------------------------------
+# Routes: Lectures & Ingestion
+# ---------------------------------------------------------------------------
+
+@app.get("/api/lectures")
+def api_get_lectures():
+    """Return the list of all registered lectures."""
+    return JSONResponse(load_lectures())
+
+
+@app.post("/instructor/upload-lecture")
+@app.post("/api/upload-lecture")
+async def upload_lecture(
+    request: Request,
+    file: UploadFile = File(...),
+    title: str = Form(...),
+    description: str = Form(""),
+    concept_id: Optional[str] = Form(None),
+    run_discovery: bool = Form(True),
+):
+    """
+    Instructor endpoint: Upload a PDF or PPTX lecture file, extract content,
+    generate concept invariants, run the Fallacy Discovery Agent, and register
+    the lecture so it's immediately available on student dashboard.
+    """
+    if not _get_instructor(request):
+        return JSONResponse({"error": "Unauthorized. Instructor login required."}, status_code=401)
+
+    title = title.strip()
+    if not title:
+        return JSONResponse({"error": "Lecture title is required."}, status_code=400)
+
+    filename = file.filename or "lecture.pdf"
+    ext = Path(filename).suffix.lower()
+    if ext not in (".pdf", ".pptx", ".ppt"):
+        return JSONResponse(
+            {"error": f"Unsupported file type '{ext}'. Please upload a .pdf or .pptx file."},
+            status_code=400,
+        )
+
+    try:
+        file_bytes = await file.read()
+        if not file_bytes:
+            return JSONResponse({"error": "Uploaded file is empty."}, status_code=400)
+
+        import asyncio
+        from web.lecture_ingest import ingest_lecture
+
+        result = await asyncio.to_thread(
+            ingest_lecture,
+            file_bytes=file_bytes,
+            filename=filename,
+            title=title,
+            description=description,
+            concept_id=concept_id,
+            run_discovery=run_discovery,
+            db_path=DB_PATH,
+        )
+
+        return JSONResponse({
+            "status": "success",
+            "concept_id": result.concept_id,
+            "lecture_num": result.lecture_num,
+            "title": result.title,
+            "description": result.description,
+            "raw_text_length": result.raw_text_length,
+            "fallacies_count": result.fallacies_count,
+            "opening_question": result.opening_question,
+            "fallacies": result.fallacies,
+        })
+    except ValueError as ve:
+        return JSONResponse({"error": str(ve)}, status_code=400)
+    except Exception as e:
+        return JSONResponse({"error": f"Failed to ingest lecture: {str(e)}"}, status_code=500)
 
 

@@ -27,6 +27,35 @@
       {{LECTURE_CARDS}}
     </div>
   </div>
+
+  <script>
+    async function refreshDashboardLectures() {
+      try {
+        const res = await fetch('/api/lectures');
+        const lectures = await res.json();
+        if (!Array.isArray(lectures) || lectures.length === 0) return;
+        const grid = document.querySelector('.lecture-grid');
+        if (!grid) return;
+        grid.innerHTML = lectures.map(lec => `
+          <a href="/chat/${lec.id}" class="lecture-card" id="card-${lec.id}">
+            <div class="lecture-num">Lecture ${lec.num}</div>
+            <div class="lecture-title">${lec.title}</div>
+            <div class="lecture-desc">${lec.desc || ''}</div>
+            <div class="lecture-action">Start Revision →</div>
+          </a>
+        `).join('');
+      } catch (e) {
+        // Fallback to server-rendered cards
+      }
+    }
+
+    // Refresh when tab gains focus or on load
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboardLectures();
+      }
+    });
+  </script>
 </body>
 
 </html>
