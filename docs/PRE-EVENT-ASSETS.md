@@ -19,7 +19,7 @@ In accordance with the CEG ASTRA Agent-a-thon guidelines (`docs/ON-THE-DAY.md`),
 
 ### 2. Prior Prompts, Agent Definitions & Evaluation Sets
 * **None**, with the sole exception of our preliminary project proposal:
-  * [`docs/Agent_Specification.md`](file:///d:/Study%20materials/sem7/AgentX/feynman-check/docs/Agent_Specification.md): The AgentSpec submitted on Tuesday, 15 September 2026, defining the problem setting (CS8492 Operating Systems Virtual Memory / TLB misconceptions), target state machine, data contracts, and verification criteria.
+  * [`docs/Agent_Specification.md`](docs/Agent_Specification.md): The AgentSpec submitted on Tuesday, 15 September 2026, defining the problem setting (CS8492 Operating Systems Virtual Memory / TLB misconceptions), target state machine, data contracts, and verification criteria.
 * No system prompts, prompt engineering iterations, or evaluation scripts were pre-built before Day 1. All prompts and agent nodes will be developed live during the event.
 
 ### 3. Datasets & Corpora
