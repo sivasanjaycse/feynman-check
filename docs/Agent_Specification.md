@@ -11,9 +11,9 @@
 
 ## 1. The setting
 
-**Who exactly:** Second-year undergraduate Computer Science students at Anna University (CEG) taking CS8492 (Operating Systems), studying Virtual Memory and Page Table address translation after Lecture 14.  
+**Who exactly:** Second-year undergraduate Computer Science students at Anna University (CEG) taking CS8492 (Operating Systems), studying topics such as Virtual Memory, Deadlocks, Process Scheduling, and Memory Management across lectures.  
 **What they do today:** After class, students re-read 45 PowerPoint slides, glance at textbook diagrams, or run generic ChatGPT prompts like *"Explain paging to me"*. When doing so, they passively nod along with the text because they do not realize which nuances they have misunderstood.  
-**Why that is hard:** Address translation contains subtle conceptual invariants (e.g., Virtual Page Number to Physical Frame Number translation happens in hardware via the MMU/TLB, while a Page Fault is a software interrupt handled by the OS kernel). Students conflate the two, believe they understand it, and only discover they cannot trace the pipeline during the mid-semester exam. Meanwhile, the professor has no visibility into this widespread silent confusion until grading 60 failed answer scripts weeks later.
+**Why that is hard:** Each lecture topic contains subtle conceptual invariants (e.g., for Virtual Memory: Virtual Page Number to Physical Frame Number translation happens in hardware via the MMU/TLB, while a Page Fault is a software interrupt handled by the OS kernel; for Deadlocks: a cycle in a resource allocation graph is necessary but not sufficient for deadlock in multi-instance resource systems). Students conflate concepts, believe they understand them, and only discover their misconceptions during the mid-semester exam. Meanwhile, the professor has no visibility into widespread silent confusion until grading 60 failed answer scripts weeks later.
 
 ## 2. The problem this solves
 
@@ -23,8 +23,9 @@ In the Spring 2025 OS mid-semester exam at CEG, 42 out of 65 students lost full 
 
 An active Socratic agent that requires a student to explain a core lecture invariant in their own words with a concrete example, backward-loops with a targeted edge-case counter-probe when ambiguity or fallacies appear, and pauses to escalate an anonymized 2-minute remediation brief to the professor once three students exhibit the identical misconception pattern.
 
-**Input:** A 1-page markdown ground-truth concept specification (OS Virtual Memory invariants) and free-text student explanations.  
+**Input:** A 1-page markdown ground-truth concept specification (any OS lecture topic, e.g. Virtual Memory, Deadlocks, CPU Scheduling) and free-text student explanations.  
 **Output:** Student-facing targeted Socratic counter-example probes, an updated per-student mental model log, and a high-priority instructor alert brief with direct anonymized quotes and a suggested recap slide.  
+**Topic agnosticism by design:** The agent operates entirely based on `data/concepts/{concept_id}.md`. Dropping a new markdown file into that directory (e.g., `cpu_scheduling.md` or `distributed_raft_consensus.md`) instantly adapts the entire pipeline — critic evaluation, probe generation, batch aggregation, and instructor reporting — without modifying a single line of agent code.  
 **Never, however much a user wants it:** It will never parse raw lecture audio/video, will never generate generic multi-choice quizzes, will never explain the answer directly to the student before they grapple with the counter-example, and will never track multi-course longitudinal student portfolios.
 
 **Why this is agentic, in your own words:**  
@@ -33,9 +34,13 @@ It maintains persistent state between student revisions and across cohort runs i
 ## 4. A complete walkthrough
 
 ### Step 1 — Ingestion of Ground-Truth Concept
-System initializes with `data/concepts/virtual_memory.md` containing invariant rules:
+System initializes with `data/concepts/{concept_id}.md` (e.g. `virtual_memory.md`) containing invariant rules:
 - *Invariant 1:* TLB miss checks RAM Page Table; only a Page Table Valid Bit = 0 (Page Fault) triggers Disk I/O.
 - *Invariant 2:* Virtual Page Number (VPN) maps to Physical Frame Number (PFN); offset bits remain unaltered.
+
+For a **different concept** (e.g., deadlocks), `data/concepts/deadlocks.md` is loaded instead, containing:
+- *Invariant 1:* All four Coffman conditions must hold simultaneously for deadlock to occur.
+- *Invariant 2:* Starvation ≠ Deadlock; an unsafe state ≠ deadlocked state.
 
 ### Step 2 — Student 1 (Dilshan) Initial Submission
 Dilshan enters his explanation via CLI:
@@ -249,10 +254,11 @@ class ProfessorEscalationReport(BaseModel):
 - **Done when:** Human inputs `A` or `D`.
 
 **Where the documents come in:**
-- **What documents it reads:** `data/concepts/virtual_memory.md` (1-page curated reference text).
-- **What each one lets it prove:** Proves the invariant definitions of Virtual Page Number, Physical Frame Number, TLB hit/miss transitions, and Page Fault ISR invocation.
-- **What it does when the evidence is not there:** If a student mentions an out-of-scope OS topic (e.g., Disk Scheduling Algorithms like SCAN/C-LOOK), the agent outputs: `"Out of scope for this concept check. Please focus strictly on Virtual Memory Address Translation."`
-- **How a citation gets checked:** The critic must quote the exact invariant number and line from `data/concepts/virtual_memory.md` in its internal chain-of-thought before generating a probe.
+- **What documents it reads:** `data/concepts/{concept_id}.md` (1-page curated reference text, e.g. `virtual_memory.md`, `deadlocks.md`, or any future concept).
+- **What each one lets it prove:** Proves the invariant definitions of the specific lecture concept. For virtual_memory: Virtual Page Number, Physical Frame Number, TLB hit/miss transitions, and Page Fault ISR invocation. For deadlocks: Coffman Conditions, Starvation vs. Deadlock, Safe vs. Unsafe vs. Deadlocked state.
+- **What it does when the evidence is not there:** If a concept markdown file is not found in `data/concepts/`, the agent falls back to the in-memory invariant stub and continues with reduced precision. The CLI's `list-concepts` command shows available concept files.
+- **How a citation gets checked:** The critic must quote the exact invariant number and line from the concept markdown in its internal chain-of-thought before generating a probe.
+- **Scope enforcement:** Each concept markdown defines its own scope boundaries. Out-of-scope topics trigger: `"Out of scope for this concept check. Please focus strictly on [concept topic]."`
 
 **Where the human comes in:**
 - **The question it asks:** *"3 students exhibited the identical misconception: [Conflating TLB Miss with Page Fault]. Acknowledge to add 2-minute remediation slide to Lecture 15 queue? [A]cknowledge / [D]ismiss"*
@@ -272,7 +278,9 @@ When a student who previously failed or required probes returns to run a check o
 
 | file | owns | done when |
 |---|---|---|
-| `data/concepts/virtual_memory.md` | Ground-truth invariants & common fallacies | Invariants 1–3 and edge cases are written down. |
+| `data/concepts/{concept_id}.md` | Ground-truth invariants & common fallacies for **any** lecture concept | Invariants and fallacy tags are written; the agent adapts automatically. |
+| `data/concepts/virtual_memory.md` | Pre-built virtual memory invariants (demo-ready) | Invariants 1–3 and edge cases are written down. |
+| `data/concepts/deadlocks.md` | Pre-built deadlocks invariants (demo-ready) | Coffman conditions, starvation vs. deadlock, safe vs. unsafe state. |
 | `src/state.py` | Pydantic models & LangGraph TypedDict state | All models from Section 7 compile with strict types. |
 | `src/agent_nodes.py` | Node functions (`evaluate`, `probe`, `log`) | Each node executes and handles fallback schemas cleanly. |
 | `src/tools/rule_lookup.py` | Exact string invariant retrieval tool | Deterministically returns relevant invariant text. |
@@ -283,7 +291,8 @@ When a student who previously failed or required probes returns to run a check o
 **Which of them are model calls:** `evaluate_explanation` (Critic) and `generate_probe` (Socratic Generator).  
 **Which constants here are architecture, and which are your domain's opinions:**
 - *Architecture constants:* `MAX_ITERATIONS = 2`, `BATCH_ALERT_THRESHOLD = 3`, `LLM_TIMEOUT_SECONDS = 30`.
-- *Domain opinions:* The definition of what constitutes an acceptable vs unacceptable OS address translation mental model in `virtual_memory.md`.
+- *Domain opinions:* The definition of what constitutes an acceptable vs unacceptable mental model, encoded in each `data/concepts/{concept_id}.md` file — maintained by the course instructor, not the agent.
+- *Zero-code extension guarantee:* Adding `data/concepts/cpu_scheduling.md` with properly formatted fallacy tags (`### FALLACY_TAG_NAME`) is sufficient for the agent to adapt. No Python files require modification.
 
 ## 11. What this deliberately does not do
 
@@ -325,9 +334,21 @@ When a student who previously failed or required probes returns to run a check o
 ## 14. How this grows
 
 - **The Seam:** The agent's core state machine and file contracts are completely agnostic of the concept topic.
-- **Extension 1 (New Subjects):** Dropping a new markdown file into `data/concepts/` (e.g., `compiler_phases.md` or `distributed_raft_consensus.md`) instantly adapts the entire pipeline without modifying a single line of agent code.
+- **Extension 1 — New Concepts (Zero Code):** Dropping a new markdown file into `data/concepts/` (e.g., `cpu_scheduling.md` or `distributed_raft_consensus.md`) instantly adapts the entire pipeline without modifying a single line of agent code. The markdown file must follow this convention:
+  ```markdown
+  # Concept Invariants: <Topic Name>
+  ## 1. Ground Truth Invariants
+  ### Invariant 1: ...
+  ## 2. Common Fallacy Patterns (Known Misconceptions)
+  ### `FALLACY_TAG_NAME_IN_CAPS`
+  - **Description:** ...
+  - **Example flawed claim:** ...
+  - **Pedagogical counter:** ...
+  ```
+  Once the file exists, `python scripts/feynman.py run --concept=<concept_id>` runs the full Socratic pipeline, `python scripts/feynman.py simulate-cohort --concept=<concept_id>` triggers batch escalation, and `python scripts/feynman.py list-concepts` shows it in the catalogue.
 - **Extension 2 (LMS Webhook):** Replacing the terminal input/output with a Canvas/Moodle webhook seam requires only swapping `main.py` for a lightweight FastAPI listener; the underlying LangGraph state machine remains 100% untouched.
 - **Concurrency & Locking:** If scaled beyond a single hackathon batch, reading/writing `batch_telemetry.json` requires a simple file lock (`fcntl` / `portalocker`) to avoid race conditions across parallel student sessions.
+- **Dynamic Discovery:** The CLI's `list-concepts` subcommand dynamically scans `data/concepts/` and prints the run command for each concept. No hardcoded concept registry exists anywhere in the codebase.
 
 ## 15. What you are least sure about
 

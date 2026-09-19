@@ -9,14 +9,23 @@ Usage:
     # 2. Test live with OpenRouter LLM (enter your own explanation interactively):
     python scripts/feynman.py run --concept=virtual_memory
 
-    # 3. Test another topic (proving topic-agnostic design):
+    # 3. Test any other concept (proving topic-agnostic design):
     python scripts/feynman.py run --concept=deadlocks
 
-    # 4. Simulate the cohort (Dilshan, Siva, Bakia) to trigger batch telemetry:
+    # 4. Test a brand-new concept (just drop a .md in data/concepts/ first):
+    python scripts/feynman.py run --stub --concept=cpu_scheduling
+
+    # 5. Simulate the cohort (Dilshan, Siva, Bakia) for virtual_memory:
     python scripts/feynman.py simulate-cohort
 
-    # 5. Replay an entire session's audit trail:
+    # 6. Simulate cohort for any other concept:
+    python scripts/feynman.py simulate-cohort --concept=deadlocks
+
+    # 7. Replay an entire session's audit trail:
     python scripts/feynman.py replay <run_id>
+
+    # 8. List all available concept files:
+    python scripts/feynman.py list-concepts
 """
 from __future__ import annotations
 
@@ -50,7 +59,7 @@ from demo.feynman.flow import (
     build_flow,
     load_concept_ground_truth,
 )
-from demo.feynman.stub import CANNED_STUDENTS, StubCompleter, stub_complete
+from demo.feynman.stub import CANNED_STUDENTS, StubCompleter, stub_complete, get_canned_cohort_for_concept
 
 # Terminal ANSI formatting
 DIM = "\033[2m"
@@ -91,7 +100,11 @@ def cmd_run(args: argparse.Namespace) -> int:
     print(f"{_c('Concept:', DIM)} {BOLD}{concept_id}{RESET}   {_c('Student ID:', DIM)} {student_id}")
 
     # Display ground truth preview
-    ground_truth = load_concept_ground_truth(concept_id)
+    try:
+        ground_truth = load_concept_ground_truth(concept_id)
+    except FileNotFoundError as e:
+        print(_c(f"\nError: {e}", RED))
+        return 1
     first_few_lines = "\n".join(ground_truth.strip().splitlines()[:6])
     print(f"\n{_c('Target Invariants Preview:', CYAN)}\n{_c(first_few_lines, DIM)}\n...")
 
@@ -217,55 +230,89 @@ def cmd_replay(args: argparse.Namespace) -> int:
 
 
 def cmd_simulate_cohort(args: argparse.Namespace) -> int:
-    """Simulates 3 cohort members (Dilshan, Siva, Bakia) demonstrating batch accumulation."""
-    print(f"\n{_c('=== Simulating Cohort Submissions (Dilshan, Siva, Bakia) ===', BOLD)}")
+    """Simulates 3 cohort members demonstrating batch accumulation for any concept."""
+    concept_id = getattr(args, "concept", "virtual_memory") or "virtual_memory"
+    print(f"\n{_c('=== Simulating Cohort Submissions ===', BOLD)}")
+    print(f"{_c('Concept:', DIM)} {BOLD}{concept_id}{RESET}")
     store = Store(args.db)
     st = load_settings()
 
-    students = ["dilshan", "siva", "bakia"]
-    for name in students:
-        canned = CANNED_STUDENTS[name]
-        sid = canned["student_id"]
+    cohort_profiles = get_canned_cohort_for_concept(concept_id)
+    if not cohort_profiles:
+        print(_c(f"No canned cohort profiles found for concept '{concept_id}'.", RED))
+        print("Tip: ensure data/concepts/{concept_id}.md exists with fallacy tags defined.")
+        return 1
+
+    for profile in cohort_profiles:
+        sid = profile["student_id"]
+        name = profile.get("name", sid)
+        initial_text = profile["initial_text"]
         print(f"\n---> Ingesting student: {_c(name.upper(), BOLD)} ({sid})")
 
-        run_id = store.create_run("feynman", meta={"student_id": sid, "student_name": name})
+        run_id = store.create_run("feynman", meta={"student_id": sid, "student_name": name.lower()})
         store.append(
             run_id,
             "input",
-            {"student_id": sid, "concept_id": "virtual_memory", "text": canned["initial_text"]},
+            {"student_id": sid, "concept_id": concept_id, "text": initial_text},
             produced_by="test",
         )
 
         flow = build_flow(call=StubCompleter())
         state = runner.advance(store, run_id, flow, st)
 
-        session_rec = store.history(run_id, "session_record")[-1].payload
-        print(f"     Status: {_c(session_rec['final_verdict'], GREEN)} | Flaw: {_c(str(session_rec['tagged_fallacy']), AMBER)}")
+        session_recs = store.history(run_id, "session_record")
+        if session_recs:
+            session_rec = session_recs[-1].payload
+            print(f"     Status: {_c(session_rec['final_verdict'], GREEN)} | Flaw: {_c(str(session_rec['tagged_fallacy']), AMBER)}")
+        else:
+            print(f"     State: {_c(str(state), AMBER)}")
 
     # Check student JSON files
     students_dir = Path("data/students")
-    json_files = list(students_dir.glob("*.json"))
-    print(f"\n{_c('Batch State:', GREEN)} {len(json_files)} student telemetry files stored under data/students/.")
+    json_files = list(students_dir.glob("*.json")) if students_dir.exists() else []
+    print(f"\n{_c('Batch State:', GREEN)} {len(json_files)} student telemetry file(s) stored under data/students/.")
     print(f"Run {_c('pytest tests/test_feynman_flow.py', CYAN)} to verify all test invariants.")
+    return 0
+
+
+def cmd_list_concepts(args: argparse.Namespace) -> int:
+    """Lists all available concept files in data/concepts/."""
+    concepts_dir = Path("data/concepts")
+    if not concepts_dir.exists():
+        print(_c("data/concepts/ directory not found.", RED))
+        return 1
+    md_files = sorted(concepts_dir.glob("*.md"))
+    if not md_files:
+        print(_c("No concept files found in data/concepts/.", AMBER))
+        print("Create a .md file there (e.g., data/concepts/cpu_scheduling.md) to add a new concept.")
+        return 0
+    print(f"\n{_c('=== Available Concepts ===', BOLD)}")
+    for f in md_files:
+        concept_id = f.stem
+        print(f"  {_c(concept_id, CYAN):40s}  {_c(f'python scripts/feynman.py run --concept={concept_id}', DIM)}")
+    print(f"\n{_c('To add a new concept:', DIM)} drop a .md file with fallacy tags into data/concepts/")
+    print(f"{_c('No Python source changes required.', GREEN)}\n")
     return 0
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Socratic Feynman Check CLI",
+        description="Socratic Feynman Check CLI — Concept-Agnostic Agent",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument("--db", default="run.db", help="SQLite database path")
     sub = parser.add_subparsers(dest="cmd", required=True)
 
     # run command
-    r = sub.add_parser("run", help="Run a Feynman Check session (live or stub)")
+    r = sub.add_parser("run", help="Run a Feynman Check session (live or stub) for any concept")
     r.add_argument("--stub", action="store_true", help="Use deterministic stubs (0 tokens, no key needed)")
     r.add_argument("--interactive", "-i", action="store_true", help="Prompt interactively for revisions even in stub mode")
-    r.add_argument("--concept", default="virtual_memory", help="Concept ID (e.g. virtual_memory, deadlocks)")
+    r.add_argument("--concept", default="virtual_memory",
+                   help="Concept ID matching a file in data/concepts/ (e.g. virtual_memory, deadlocks, cpu_scheduling)")
     r.add_argument("--student-id", default="20231035053", help="Student registration ID")
     r.add_argument("--text", default=None, help="Initial explanation text (skips interactive prompt)")
-    r.add_argument("--canned", choices=list(CANNED_STUDENTS.keys()), default="dilshan", help="Profile to use in stub mode")
+    r.add_argument("--canned", choices=list(CANNED_STUDENTS.keys()), default="dilshan",
+                   help="Canned student profile to use in stub mode (plain names default to virtual_memory; use e.g. dilshan_deadlocks for deadlocks)")
     r.set_defaults(fn=cmd_run)
 
     # replay command
@@ -274,8 +321,15 @@ def main() -> int:
     rp.set_defaults(fn=cmd_replay)
 
     # simulate-cohort command
-    sc = sub.add_parser("simulate-cohort", help="Simulate Dilshan, Siva, and Bakia submissions")
+    sc = sub.add_parser("simulate-cohort",
+                        help="Simulate Dilshan, Siva, and Bakia for any concept (triggers batch escalation)")
+    sc.add_argument("--concept", default="virtual_memory",
+                    help="Concept ID to simulate cohort for (e.g. virtual_memory, deadlocks, or any new concept in data/concepts/)")
     sc.set_defaults(fn=cmd_simulate_cohort)
+
+    # list-concepts command
+    lc = sub.add_parser("list-concepts", help="List all available concept files in data/concepts/")
+    lc.set_defaults(fn=cmd_list_concepts)
 
     args = parser.parse_args()
     return args.fn(args)

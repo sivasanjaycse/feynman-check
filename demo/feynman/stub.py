@@ -3,10 +3,20 @@ Deterministic stubs and mocks for Socratic Feynman Check & Batch Gap Ping.
 
 Allows running and testing the entire state machine, back-edge loop,
 and cohort escalation without live LLM calls, API keys, or token costs.
+
+Design: Concept-Agnostic
+  - evaluate_student_text() and generate_probe_for_flaw() both accept an
+    optional concept_id parameter and dynamically load fallacy definitions
+    from data/concepts/{concept_id}.md via batch.load_concept_fallacies_from_markdown.
+  - For any NEW concept, dropping a .md file into data/concepts/ is sufficient;
+    no Python source changes are required.
+  - Canned profiles for virtual_memory and deadlocks are pre-built for full
+    deterministic offline demo. All other concepts fall back to dynamic extraction.
 """
 from __future__ import annotations
 
 import re
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Type
 from pydantic import BaseModel
 
@@ -55,6 +65,9 @@ INVARIANT_DEADLOCKS = ConceptInvariant(
 # ---------------------------------------------------------------------------
 # Canned Student Profiles (Dilshan, Siva, Bakia, etc.)
 # ---------------------------------------------------------------------------
+# Naming convention: plain names (dilshan, siva, bakia, mastered, ambiguous,
+# adversarial) refer to virtual_memory concept for backward compatibility.
+# Concept-scoped profiles use the suffix pattern: dilshan_deadlocks, etc.
 
 CANNED_STUDENTS: Dict[str, Dict[str, Any]] = {
     "dilshan": {
@@ -292,6 +305,189 @@ CANNED_STUDENTS: Dict[str, Dict[str, Any]] = {
         "revision_verdict": None,
         "session_record": None,
     },
+    # -------------------------------------------------------------------------
+    # Deadlocks Concept Profiles
+    # -------------------------------------------------------------------------
+    "dilshan_deadlocks": {
+        "student_id": "20231035053",
+        "name": "Dilshan",
+        "concept_id": "deadlocks",
+        "initial_text": (
+            "A deadlock happens when there is a cycle in the resource allocation graph. "
+            "If process P1 waits for resource held by P2 and P2 waits for P1, they are "
+            "deadlocked because there is a cycle."
+        ),
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="CIRCULAR_WAIT_ALONE_IS_DEADLOCK",
+            flaw_explanation=(
+                "Asserting that a cycle in the resource allocation graph alone is sufficient "
+                "for deadlock. In multi-instance resource systems, a cycle is necessary but NOT sufficient."
+            ),
+            violates_invariant=True,
+            confidence=0.94,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_dl_dilshan_1",
+            counter_example_scenario=(
+                "Consider a system where resource R1 has two instances. Process P1 holds one "
+                "instance and waits for R2, while P2 holds R2 and waits for R1. But P3 holds "
+                "the second instance of R1 and is about to finish. When P3 releases R1, what "
+                "happens? Is the system still deadlocked?"
+            ),
+            target_invariant="Invariant 1: The Four Coffman Conditions",
+        ),
+        "revision_text": (
+            "I see — a cycle alone doesn't guarantee deadlock when multiple resource instances exist. "
+            "All four Coffman conditions must hold simultaneously: mutual exclusion, hold-and-wait, "
+            "no preemption, and circular wait. In multi-instance systems, a cycle can be broken if "
+            "a non-waiting process releases an instance."
+        ),
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.96,
+        ),
+        "session_record": StudentSessionRecord(
+            student_id="20231035053",
+            concept_id="deadlocks",
+            iteration_count=1,
+            initial_text=(
+                "A deadlock happens when there is a cycle in the resource allocation graph. "
+                "If process P1 waits for resource held by P2 and P2 waits for P1, they are "
+                "deadlocked because there is a cycle."
+            ),
+            probes_issued=[
+                "Consider a system where resource R1 has two instances. Process P1 holds one "
+                "instance and waits for R2, while P2 holds R2 and waits for R1. But P3 holds "
+                "the second instance of R1 and is about to finish."
+            ],
+            student_revisions=[
+                "A cycle alone doesn't guarantee deadlock when multiple resource instances exist. "
+                "All four Coffman conditions must hold simultaneously."
+            ],
+            final_verdict="MASTERED",
+            tagged_fallacy="CIRCULAR_WAIT_ALONE_IS_DEADLOCK",
+        ),
+    },
+    "siva_deadlocks": {
+        "student_id": "20231037154",
+        "name": "Siva",
+        "concept_id": "deadlocks",
+        "initial_text": (
+            "When a process waits too long in the queue and never gets the CPU, it is deadlocked "
+            "because it can never proceed."
+        ),
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="STARVATION_EQUALS_DEADLOCK",
+            flaw_explanation=(
+                "Conflating starvation (scheduling unfairness) with deadlock (circular dependency). "
+                "A starved process can still complete if high-priority load subsides."
+            ),
+            violates_invariant=True,
+            confidence=0.93,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_dl_siva_1",
+            counter_example_scenario=(
+                "A low-priority job is waiting in a print queue while high-priority jobs keep arriving. "
+                "If the high-priority jobs eventually stop arriving, can the waiting job complete? "
+                "Compare this to a process that holds resource A and waits for resource B, while another "
+                "process holds resource B and waits for resource A — can either process ever continue?"
+            ),
+            target_invariant="Invariant 2: Deadlock vs. Starvation",
+        ),
+        "revision_text": (
+            "Starvation means the process is low priority and delayed indefinitely but could still "
+            "eventually run if the system becomes fair. Deadlock means two or more processes are "
+            "permanently blocked waiting on each other in a circular dependency that can never resolve "
+            "without external intervention."
+        ),
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.95,
+        ),
+        "session_record": StudentSessionRecord(
+            student_id="20231037154",
+            concept_id="deadlocks",
+            iteration_count=1,
+            initial_text="When a process waits too long in the queue and never gets the CPU, it is deadlocked.",
+            probes_issued=[
+                "A low-priority job is waiting in a print queue while high-priority jobs keep arriving..."
+            ],
+            student_revisions=[
+                "Starvation is a scheduling issue; deadlock is a circular dependency that cannot resolve."
+            ],
+            final_verdict="MASTERED",
+            tagged_fallacy="STARVATION_EQUALS_DEADLOCK",
+        ),
+    },
+    "bakia_deadlocks": {
+        "student_id": "2023103057",
+        "name": "Bakia",
+        "concept_id": "deadlocks",
+        "initial_text": (
+            "If the system enters an unsafe state according to Banker's Algorithm, a deadlock has occurred "
+            "and all processes are stuck."
+        ),
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="UNSAFE_EQUALS_DEADLOCKED",
+            flaw_explanation=(
+                "Conflating an unsafe state with a deadlocked state. An unsafe state means safety "
+                "cannot be guaranteed under worst-case future requests, not that processes are currently deadlocked."
+            ),
+            violates_invariant=True,
+            confidence=0.92,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_dl_bakia_1",
+            counter_example_scenario=(
+                "In Banker's Algorithm, the system enters an unsafe state. The processes currently hold "
+                "their allocated resources and some are still running. If a running process finishes and "
+                "releases its resources before making any more requests, can other processes proceed? "
+                "Were any processes actually blocked in a circular dependency?"
+            ),
+            target_invariant="Invariant 3: Safe State vs. Deadlocked State",
+        ),
+        "revision_text": (
+            "An unsafe state means the system cannot guarantee all processes will finish under worst-case "
+            "future requests. But processes may not actually be blocked right now — some may complete "
+            "normally and release resources. Deadlock is when processes ARE permanently blocked in a circular "
+            "dependency. Deadlock is a strict subset of unsafe states."
+        ),
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.95,
+        ),
+        "session_record": StudentSessionRecord(
+            student_id="2023103057",
+            concept_id="deadlocks",
+            iteration_count=1,
+            initial_text="If the system enters an unsafe state, a deadlock has occurred and all processes are stuck.",
+            probes_issued=[
+                "In Banker's Algorithm, the system enters an unsafe state. Are any processes actually blocked?"
+            ],
+            student_revisions=[
+                "Unsafe state means worst-case guarantee fails; deadlock is actual circular blocking. "
+                "Deadlock is a strict subset of unsafe states."
+            ],
+            final_verdict="MASTERED",
+            tagged_fallacy="UNSAFE_EQUALS_DEADLOCKED",
+        ),
+    },
+    # -------------------------------------------------------------------------
+    # Adversarial (concept-agnostic)
+    # -------------------------------------------------------------------------
     "adversarial": {
         "student_id": "20231037777",
         "name": "AdversarialStudent",
@@ -353,27 +549,182 @@ CANNED_ESCALATION_REPORT = ProfessorEscalationReport(
 
 
 # ---------------------------------------------------------------------------
+# Dynamic Concept Fallacy Loader (reads data/concepts/{concept_id}.md)
+# ---------------------------------------------------------------------------
+
+_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "concepts"
+
+
+def _load_dynamic_fallacies(concept_id: str) -> Dict[str, str]:
+    """
+    Returns a dict of fallacy_tag -> description string by parsing the
+    data/concepts/{concept_id}.md file. Used for keyword matching in
+    evaluate_student_text for any concept not covered by static rules.
+    """
+    md_file = _DATA_DIR / f"{concept_id}.md"
+    if not md_file.exists():
+        return {}
+    try:
+        content = md_file.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    import re as _re
+    fallacies: Dict[str, str] = {}
+    tag_pattern = _re.compile(r"^###\s+`?([A-Z0-9_]+)`?", _re.MULTILINE)
+    matches = list(tag_pattern.finditer(content))
+    for i, match in enumerate(matches):
+        tag = match.group(1).strip()
+        start = match.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
+        block = content[start:end]
+        # Grab Example flawed claim and Pedagogical counter for keyword matching
+        claim_m = _re.search(r"Example flawed claim.*?:\*.*?\*(.+?)\*", block, _re.DOTALL)
+        claim = claim_m.group(1).strip() if claim_m else ""
+        counter_m = _re.search(r"Pedagogical counter:\*\*\s*(.+?)(?=\n-|\n\n|$)", block, _re.DOTALL)
+        counter = counter_m.group(1).strip() if counter_m else ""
+        fallacies[tag] = f"{claim} {counter}"
+    return fallacies
+
+
+def _load_dynamic_probes(concept_id: str) -> Dict[str, str]:
+    """
+    Returns a dict of fallacy_tag -> pedagogical_counter string from
+    data/concepts/{concept_id}.md. Used by generate_probe_for_flaw.
+    """
+    md_file = _DATA_DIR / f"{concept_id}.md"
+    if not md_file.exists():
+        return {}
+    try:
+        content = md_file.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+
+    import re as _re
+    probes: Dict[str, str] = {}
+    tag_pattern = _re.compile(r"^###\s+`?([A-Z0-9_]+)`?", _re.MULTILINE)
+    matches = list(tag_pattern.finditer(content))
+    for i, match in enumerate(matches):
+        tag = match.group(1).strip()
+        start = match.end()
+        end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
+        block = content[start:end]
+        counter_m = _re.search(r"Pedagogical counter:\*\*\s*(.+?)(?=\n-|\n\n|$)", block, _re.DOTALL)
+        if counter_m:
+            probes[tag] = counter_m.group(1).strip().replace("\n", " ")
+    return probes
+
+
+# ---------------------------------------------------------------------------
 # Canned Evaluation & Probe Generation Logic
 # ---------------------------------------------------------------------------
 
-def evaluate_student_text(text: str) -> CriticVerdict:
+# Static mastered-detection signals for virtual_memory
+_VM_MASTERED_MARKERS = [
+    "mmu just has to walk",
+    "walk the page table in ram",
+    "sitting in physical memory",
+    "valid bit in the page table itself is 0",
+    "present/valid bit",
+    "present bit is 1",
+]
+
+# Static fallacy keyword triggers for virtual_memory
+_VM_FALLACY_RULES: List[Dict[str, Any]] = [
+    {
+        "tag": "TLB_MISS_EQUALS_DISK_IO",
+        "check": lambda t: (
+            ("tlb" in t or "translation" in t or "cache miss" in t)
+            and any(w in t for w in ["page fault", "hard drive", "disk", "swap", "secondary storage", "disk fetch"])
+        ),
+        "explanation": "Conflating a TLB miss with a Page Fault. Secondary storage is not accessed on a TLB miss if the page is in RAM.",
+        "confidence": 0.94,
+    },
+    {
+        "tag": "OFFSET_MODIFIED_DURING_TRANSLATION",
+        "check": lambda t: "offset" in t and any(w in t for w in ["modified", "translated", "changes", "recalculated"]),
+        "explanation": "Asserting that offset bits change during address translation. Offset passes through unmodified.",
+        "confidence": 0.95,
+    },
+]
+
+# Static fallacy keyword triggers for deadlocks
+_DL_FALLACY_RULES: List[Dict[str, Any]] = [
+    {
+        "tag": "CIRCULAR_WAIT_ALONE_IS_DEADLOCK",
+        "check": lambda t: "cycle" in t and ("deadlock" in t or "deadlocked" in t),
+        "explanation": "In multi-instance resource systems, a cycle is necessary but not sufficient for deadlock.",
+        "confidence": 0.95,
+    },
+    {
+        "tag": "STARVATION_EQUALS_DEADLOCK",
+        "check": lambda t: ("waits too long" in t or "never gets the cpu" in t or "starvation" in t) and "deadlock" in t,
+        "explanation": "Starvation is a scheduling priority issue; deadlock is an unresolvable circular dependency.",
+        "confidence": 0.94,
+    },
+    {
+        "tag": "UNSAFE_EQUALS_DEADLOCKED",
+        "check": lambda t: ("unsafe" in t or "unsafe state" in t) and ("deadlock" in t or "deadlocked" in t or "stuck" in t),
+        "explanation": "An unsafe state is not equivalent to deadlock. Deadlock is a strict subset of unsafe states.",
+        "confidence": 0.93,
+    },
+]
+
+# Static mastered-detection for deadlocks
+_DL_MASTERED_MARKERS = [
+    "all four coffman",
+    "four conditions must hold",
+    "mutual exclusion, hold",
+    "circular dependency that cannot resolve",
+    "deadlock is a strict subset of unsafe",
+    "cycle is necessary but not sufficient",
+]
+
+# Registry of per-concept static rules — extend here when adding rich canned support
+_CONCEPT_FALLACY_RULES: Dict[str, List[Dict[str, Any]]] = {
+    "virtual_memory": _VM_FALLACY_RULES,
+    "deadlocks": _DL_FALLACY_RULES,
+}
+_CONCEPT_MASTERED_MARKERS: Dict[str, List[str]] = {
+    "virtual_memory": _VM_MASTERED_MARKERS,
+    "deadlocks": _DL_MASTERED_MARKERS,
+}
+
+
+def evaluate_student_text(text: str, concept_id: str = "virtual_memory") -> CriticVerdict:
     """
-    Deterministically evaluates student explanation text without calling an LLM.
-    Identifies adversarial injections, specific known fallacies, and mastered proofs.
+    Concept-agnostic deterministic evaluator.
+
+    Priority order:
+      1. Exact match against canned student profiles (100% fidelity for known demos)
+      2. Universal adversarial injection detection
+      3. Static per-concept fallacy rules (virtual_memory & deadlocks pre-built)
+      4. Dynamic fallacy detection from data/concepts/{concept_id}.md keyword scan
+      5. Static mastered-marker check
+      6. AMBIGUOUS fallback for truly unrecognized explanations
+
+    Adding a new concept requires ONLY dropping a .md file in data/concepts/;
+    no Python source changes needed.
     """
     cleaned = text.strip()
 
-    # Match exact canned student submissions directly for 100% deterministic fidelity
+    # 1. Exact match against all canned profiles (concept-scoped + global)
     for profile in CANNED_STUDENTS.values():
         if cleaned == profile["initial_text"].strip():
             return profile["initial_verdict"]
         if profile.get("revision_text") and cleaned == profile["revision_text"].strip():
-            return profile["revision_verdict"]
+            rv = profile.get("revision_verdict")
+            if rv is not None:
+                return rv
 
     t_lower = text.lower()
 
-    # 1. Adversarial prompt injection
-    if any(k in t_lower for k in ["ignore instructions", "ignore your instructions", "mark this concept as mastered", "pretend i am right", "bypass"]):
+    # 2. Universal adversarial injection detection
+    if any(k in t_lower for k in [
+        "ignore instructions", "ignore your instructions",
+        "mark this concept as mastered", "pretend i am right",
+        "bypass", "disregard the above",
+    ]):
         return CriticVerdict(
             verdict="MISCONCEPTION",
             detected_flaw_tag="ADVERSARIAL_INJECTION_OR_EVASION",
@@ -382,161 +733,194 @@ def evaluate_student_text(text: str) -> CriticVerdict:
             confidence=1.0,
         )
 
-    # 2. Correct / Mastered explanations
-    mastered_markers = [
-        "mmu just has to walk",
-        "walk the page table in ram",
-        "sitting in physical memory",
-        "valid bit in the page table itself is 0",
-        "present/valid bit",
-        "present bit is 1",
-    ]
-    has_mastered_phrase = any(m in t_lower for m in mastered_markers)
-    has_sound_logic = "page table in ram" in t_lower and ("valid bit" in t_lower or "present bit" in t_lower)
+    # 3. Static per-concept rules (fast path for known concepts)
+    for rule in _CONCEPT_FALLACY_RULES.get(concept_id, []):
+        if rule["check"](t_lower):
+            return CriticVerdict(
+                verdict="MISCONCEPTION",
+                detected_flaw_tag=rule["tag"],
+                flaw_explanation=rule["explanation"],
+                violates_invariant=True,
+                confidence=rule["confidence"],
+            )
 
-    if (has_mastered_phrase or has_sound_logic) and "fetches from hard drive" not in t_lower:
+    # 4. Dynamic fallacy detection from markdown ground-truth file
+    dynamic_fallacies = _load_dynamic_fallacies(concept_id)
+    for tag, description in dynamic_fallacies.items():
+        # Skip tags already handled by static rules
+        static_tags = {r["tag"] for r in _CONCEPT_FALLACY_RULES.get(concept_id, [])}
+        if tag in static_tags:
+            continue
+        # Simple keyword presence check using description tokens
+        desc_keywords = [w for w in description.lower().split() if len(w) > 4]
+        matches = sum(1 for kw in desc_keywords if kw in t_lower)
+        if matches >= 3:
+            return CriticVerdict(
+                verdict="MISCONCEPTION",
+                detected_flaw_tag=tag,
+                flaw_explanation=f"Detected alignment with known misconception pattern: {tag.replace('_', ' ').title()} for concept {concept_id}.",
+                violates_invariant=True,
+                confidence=0.80,
+            )
+
+    # 5. Static mastered-marker check
+    mastered_markers = _CONCEPT_MASTERED_MARKERS.get(concept_id, [])
+    if any(m in t_lower for m in mastered_markers):
         return CriticVerdict(
             verdict="MASTERED",
             detected_flaw_tag=None,
             flaw_explanation=None,
             violates_invariant=False,
-            confidence=0.98,
-        )
-
-    # 3. Virtual Memory: TLB Miss / Translation Cache Miss equals Disk I/O
-    translation_miss = ("tlb" in t_lower or "translation" in t_lower or "cache miss" in t_lower)
-    disk_fetch = any(w in t_lower for w in ["page fault", "hard drive", "disk", "swap", "secondary storage", "disk fetch"])
-    if translation_miss and disk_fetch:
-        return CriticVerdict(
-            verdict="MISCONCEPTION",
-            detected_flaw_tag="TLB_MISS_EQUALS_DISK_IO",
-            flaw_explanation="Conflating a TLB miss with an invalid page table entry (Page Fault). Secondary storage is not accessed on a TLB miss if the page is in RAM.",
-            violates_invariant=True,
-            confidence=0.94,
-        )
-
-    # 4. Virtual Memory: Offset modified during translation
-    if "offset" in t_lower and any(w in t_lower for w in ["modified", "translated", "changes", "recalculated"]):
-        return CriticVerdict(
-            verdict="MISCONCEPTION",
-            detected_flaw_tag="OFFSET_MODIFIED_DURING_TRANSLATION",
-            flaw_explanation="Asserting that offset bits change during address translation. Offset remains unchanged.",
-            violates_invariant=True,
             confidence=0.95,
         )
 
-    # 5. Deadlocks: Cycle alone is deadlock
-    if "cycle" in t_lower and ("deadlock" in t_lower or "deadlocked" in t_lower):
-        return CriticVerdict(
-            verdict="MISCONCEPTION",
-            detected_flaw_tag="CIRCULAR_WAIT_ALONE_IS_DEADLOCK",
-            flaw_explanation="In multiple-instance resource systems, a cycle is necessary but not sufficient for deadlock.",
-            violates_invariant=True,
-            confidence=0.95,
-        )
+    # Bonus: VPN/PFN/RAM check (virtual_memory full accuracy)
+    if concept_id == "virtual_memory":
+        if "vpn" in t_lower and ("pfn" in t_lower or "frame" in t_lower) and "ram" in t_lower:
+            return CriticVerdict(
+                verdict="MASTERED",
+                detected_flaw_tag=None,
+                flaw_explanation=None,
+                violates_invariant=False,
+                confidence=0.95,
+            )
 
-    # 6. Deadlocks: Starvation equals deadlock
-    if ("waits too long" in t_lower or "queue" in t_lower or "starvation" in t_lower) and "deadlock" in t_lower:
-        return CriticVerdict(
-            verdict="MISCONCEPTION",
-            detected_flaw_tag="STARVATION_EQUALS_DEADLOCK",
-            flaw_explanation="Starvation is a scheduling priority issue; deadlock is an unresolvable circular dependency.",
-            violates_invariant=True,
-            confidence=0.94,
-        )
-
-    # 7. Ambiguous / Too short or vague
-    if len(text.strip().split()) < 12 or any(v in t_lower for v in ["system that manages", "uses memory pages and tables"]):
+    # 6. Ambiguous / too short / vague
+    if len(text.strip().split()) < 12:
         return CriticVerdict(
             verdict="AMBIGUOUS",
             detected_flaw_tag="VAGUE_EXPLANATION",
-            flaw_explanation="Explanation is superficial or circular; does not demonstrate concrete understanding of invariants.",
+            flaw_explanation="Explanation is too brief to verify conceptual understanding.",
             violates_invariant=False,
             confidence=0.85,
         )
 
-    # 8. Complete accurate VM explanation
-    if "vpn" in t_lower and ("pfn" in t_lower or "frame" in t_lower) and "ram" in t_lower:
-        return CriticVerdict(
-            verdict="MASTERED",
-            detected_flaw_tag=None,
-            flaw_explanation=None,
-            violates_invariant=False,
-            confidence=0.95,
-        )
-
-    # Default fallback
+    # Default: AMBIGUOUS for truly unrecognized explanations
     return CriticVerdict(
         verdict="AMBIGUOUS",
         detected_flaw_tag="UNVERIFIED_EXPLANATION",
-        flaw_explanation="Explanation does not clearly state whether TLB misses resolve in RAM or trigger disk access.",
+        flaw_explanation=f"Explanation does not clearly demonstrate mastery of {concept_id.replace('_', ' ')} invariants.",
         violates_invariant=False,
         confidence=0.75,
     )
 
 
-def generate_probe_for_flaw(flaw_tag: Optional[str], concept_id: str = "virtual_memory") -> ProbeMessage:
-    """Generates a targeted counter-example probe for a detected flaw tag."""
-    if flaw_tag == "TLB_MISS_EQUALS_DISK_IO":
+# Static probe library (rich canned probes with specific scenario details)
+_STATIC_PROBE_LIBRARY: Dict[str, ProbeMessage] = {
+    "TLB_MISS_EQUALS_DISK_IO": ProbeMessage(
+        probe_id="probe_vm_tlb_1",
+        counter_example_scenario=(
+            "Consider this scenario: The page containing your data was loaded into physical RAM "
+            "five milliseconds ago by another thread, but this specific CPU core just cleared its "
+            "TLB cache. If a TLB miss occurs right now, does the OS really need to read the physical "
+            "disk? What step happens first in memory?"
+        ),
+        target_invariant="Invariant 1: TLB Miss vs. Page Fault (Memory vs. Disk)",
+    ),
+    "OFFSET_MODIFIED_DURING_TRANSLATION": ProbeMessage(
+        probe_id="probe_vm_offset_1",
+        counter_example_scenario=(
+            "If the page size is exactly 4KB and the physical frame size is also exactly 4KB, "
+            "why would the relative position of a byte within the page need to be modified "
+            "when locating that byte inside the frame?"
+        ),
+        target_invariant="Invariant 2: Address Translation & Bit Mapping",
+    ),
+    "TLB_LOOKUP_IS_OS_SOFTWARE": ProbeMessage(
+        probe_id="probe_vm_tlb_os_1",
+        counter_example_scenario=(
+            "If the OS kernel were responsible for searching the TLB on every memory access, "
+            "how would that affect the speed of every single instruction the CPU executes? "
+            "What hardware component is designed specifically for this task?"
+        ),
+        target_invariant="Invariant 3: Hardware vs. Software Execution Boundary",
+    ),
+    "CIRCULAR_WAIT_ALONE_IS_DEADLOCK": ProbeMessage(
+        probe_id="probe_deadlock_cycle_1",
+        counter_example_scenario=(
+            "Consider a system where resource R1 has two instances. Process P1 holds one and waits "
+            "for R2, P2 holds R2 and waits for R1, but P3 holds the second instance of R1 and is "
+            "not waiting for anything. When P3 finishes and releases R1, what happens to P2? "
+            "Is the system truly deadlocked?"
+        ),
+        target_invariant="Invariant 1: The Four Coffman Conditions",
+    ),
+    "STARVATION_EQUALS_DEADLOCK": ProbeMessage(
+        probe_id="probe_deadlock_starvation_1",
+        counter_example_scenario=(
+            "Consider a low-priority job waiting in a print queue while high-priority jobs keep "
+            "arriving. If the high-priority jobs eventually stop arriving, can the waiting job "
+            "complete? Is it blocked by a circular dependency on itself?"
+        ),
+        target_invariant="Invariant 2: Deadlock vs. Starvation",
+    ),
+    "UNSAFE_EQUALS_DEADLOCKED": ProbeMessage(
+        probe_id="probe_deadlock_unsafe_1",
+        counter_example_scenario=(
+            "In Banker's Algorithm, the system enters an unsafe state. The processes currently hold "
+            "their allocated resources and some are still running. If a running process finishes and "
+            "releases resources before making additional requests, can other processes proceed? "
+            "Were any processes actually blocked in a circular dependency at this moment?"
+        ),
+        target_invariant="Invariant 3: Safe State vs. Deadlocked State",
+    ),
+    "ADVERSARIAL_INJECTION_OR_EVASION": ProbeMessage(
+        probe_id="probe_adversarial_1",
+        counter_example_scenario=(
+            "Meta-instructions cannot bypass conceptual verification. Please explain in your own "
+            "words the core mechanics of this concept, step by step."
+        ),
+        target_invariant="General: Conceptual Verification Required",
+    ),
+}
+
+
+def generate_probe_for_flaw(
+    flaw_tag: Optional[str],
+    concept_id: str = "virtual_memory",
+) -> ProbeMessage:
+    """
+    Concept-agnostic probe generator.
+
+    Priority order:
+      1. Static probe library (rich pre-built scenarios for known fallacy tags)
+      2. Dynamic probe from data/concepts/{concept_id}.md pedagogical counter text
+      3. Generic step-through fallback probe
+
+    Adding a new concept requires ONLY dropping a .md file in data/concepts/;
+    no Python source changes needed for basic probe generation.
+    """
+    if not flaw_tag:
+        flaw_tag = "UNVERIFIED_EXPLANATION"
+
+    # 1. Static library lookup (best probe quality)
+    if flaw_tag in _STATIC_PROBE_LIBRARY:
+        return _STATIC_PROBE_LIBRARY[flaw_tag]
+
+    # 2. Dynamic extraction from concept markdown
+    dynamic_probes = _load_dynamic_probes(concept_id)
+    if flaw_tag in dynamic_probes:
+        counter_text = dynamic_probes[flaw_tag]
         return ProbeMessage(
-            probe_id="probe_vm_tlb_1",
+            probe_id=f"probe_{concept_id}_{flaw_tag.lower()}_1",
             counter_example_scenario=(
-                "Consider this scenario: The page containing your data was loaded into physical RAM "
-                "five milliseconds ago by another thread, but this specific CPU core just cleared its "
-                "TLB cache. If a TLB miss occurs right now, does the OS really need to read the physical "
-                "disk? What step happens first in memory?"
+                f"Consider this: {counter_text} "
+                f"Can you trace through the correct sequence of events step by step?"
             ),
-            target_invariant="Invariant 1: TLB Miss vs. Page Fault (Memory vs. Disk)",
+            target_invariant=f"{concept_id.replace('_', ' ').title()}: {flaw_tag.replace('_', ' ').title()}",
         )
-    elif flaw_tag == "OFFSET_MODIFIED_DURING_TRANSLATION":
-        return ProbeMessage(
-            probe_id="probe_vm_offset_1",
-            counter_example_scenario=(
-                "If the page size is exactly 4KB and the physical frame size is also exactly 4KB, "
-                "why would the relative position of a byte within the page need to be modified "
-                "when locating that byte inside the frame?"
-            ),
-            target_invariant="Invariant 2: Address Translation & Bit Mapping",
-        )
-    elif flaw_tag == "CIRCULAR_WAIT_ALONE_IS_DEADLOCK":
-        return ProbeMessage(
-            probe_id="probe_deadlock_cycle_1",
-            counter_example_scenario=(
-                "Consider a system where resource R1 has two instances. Process P1 holds one and waits "
-                "for R2, P2 holds R2 and waits for R1, but P3 holds the second instance of R1 and is "
-                "not waiting for anything. When P3 finishes and releases R1, what happens to P2? "
-                "Is the system truly deadlocked?"
-            ),
-            target_invariant="Invariant 1: The Four Coffman Conditions",
-        )
-    elif flaw_tag == "STARVATION_EQUALS_DEADLOCK":
-        return ProbeMessage(
-            probe_id="probe_deadlock_starvation_1",
-            counter_example_scenario=(
-                "Consider a low-priority job waiting in a print queue while high-priority jobs keep "
-                "arriving. If the high-priority jobs eventually stop arriving, can the waiting job "
-                "complete? Is it blocked by a circular dependency on itself?"
-            ),
-            target_invariant="Invariant 2: Deadlock vs. Starvation",
-        )
-    elif flaw_tag == "ADVERSARIAL_INJECTION_OR_EVASION":
-        return ProbeMessage(
-            probe_id="probe_adversarial_1",
-            counter_example_scenario=(
-                "Meta-instructions cannot bypass conceptual verification. Please explain in your own "
-                "words what happens during address translation on a TLB miss."
-            ),
-            target_invariant="Invariant 1: TLB Miss vs. Page Fault (Memory vs. Disk)",
-        )
-    else:
-        return ProbeMessage(
-            probe_id="probe_generic_1",
-            counter_example_scenario=(
-                "Can you walk through what happens step-by-step from when the CPU generates an address "
-                "to when the physical byte is accessed?"
-            ),
-            target_invariant="Invariant 1: TLB Miss vs. Page Fault (Memory vs. Disk)",
-        )
+
+    # 3. Generic fallback probe
+    concept_label = concept_id.replace("_", " ").title()
+    return ProbeMessage(
+        probe_id=f"probe_{concept_id}_generic_1",
+        counter_example_scenario=(
+            f"Walk through the precise sequence of events — step by step — "
+            f"that should occur according to the ground-truth invariants for {concept_label}. "
+            f"Does your explanation align with all of those steps?"
+        ),
+        target_invariant=f"{concept_label}: Core Invariants",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -609,6 +993,22 @@ class StubCompleter:
                 v = self._forced_verdict
                 self._forced_verdict = None
                 return v
+            # Extract concept_id from messages if available
+            concept_id = "virtual_memory"
+            for m in messages:
+                content = m.get("content", "")
+                if "concept_id" in content:
+                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    if m_cid:
+                        concept_id = m_cid.group(1)
+                # Also try extracting from GROUND TRUTH section header
+                if "GROUND TRUTH" in content:
+                    m_cid2 = re.search(r'Concept Invariants:\s*([\w\s&]+?)\n', content)
+                    if m_cid2:
+                        # Map concept name back if possible (rough heuristic)
+                        raw = m_cid2.group(1).lower().replace(" ", "_").replace("&", "").strip("_")
+                        if raw:
+                            concept_id = raw
             # Extract target student text if embedded in prompt sections
             text_to_eval = user_text if user_text else combined_text
             if "### STUDENT SUBMISSION" in text_to_eval:
@@ -620,29 +1020,31 @@ class StubCompleter:
                 if "\n\nEvaluate" in part:
                     part = part.split("\n\nEvaluate", 1)[0]
                 text_to_eval = part.strip().strip("\"'")
-            return evaluate_student_text(text_to_eval)
+            return evaluate_student_text(text_to_eval, concept_id=concept_id)
 
         if schema is ProbeMessage or schema_name == "ProbeMessage":
             if self._forced_probe is not None:
                 p = self._forced_probe
                 self._forced_probe = None
                 return p
-            # Detect flaw tag if embedded in messages
+            # Extract concept_id from messages if available
+            concept_id = "virtual_memory"
+            for m in messages:
+                content = m.get("content", "")
+                if "concept_id" in content:
+                    m_cid = re.search(r'concept_id["\s:]+([a-z_]+)', content)
+                    if m_cid:
+                        concept_id = m_cid.group(1)
+            # Detect flaw tag from messages (all known tags, dynamic)
             flaw_tag = None
-            for tag in [
-                "TLB_MISS_EQUALS_DISK_IO",
-                "OFFSET_MODIFIED_DURING_TRANSLATION",
-                "CIRCULAR_WAIT_ALONE_IS_DEADLOCK",
-                "STARVATION_EQUALS_DEADLOCK",
-                "ADVERSARIAL_INJECTION_OR_EVASION",
-            ]:
+            for tag in list(_STATIC_PROBE_LIBRARY.keys()):
                 if tag in combined_text:
                     flaw_tag = tag
                     break
             if not flaw_tag:
-                verdict = evaluate_student_text(combined_text)
+                verdict = evaluate_student_text(combined_text, concept_id=concept_id)
                 flaw_tag = verdict.detected_flaw_tag
-            return generate_probe_for_flaw(flaw_tag)
+            return generate_probe_for_flaw(flaw_tag, concept_id=concept_id)
 
         if schema is BatchMisconceptionCluster or schema_name == "BatchMisconceptionCluster":
             return CANNED_CLUSTER
@@ -694,3 +1096,79 @@ def get_cohort_records() -> List[StudentSessionRecord]:
         CANNED_STUDENTS["siva"]["session_record"],
         CANNED_STUDENTS["bakia"]["session_record"],
     ]
+
+
+def get_canned_cohort_for_concept(concept_id: str) -> List[Dict[str, Any]]:
+    """
+    Returns 3 canned student profiles for a given concept_id.
+
+    For known concepts (virtual_memory, deadlocks), returns the pre-built
+    misconception profiles. For unknown concepts, returns 3 generic profiles
+    using the first 3 fallacy tags found in data/concepts/{concept_id}.md.
+    """
+    # Concept-scoped cohort lookup
+    concept_cohorts: Dict[str, List[str]] = {
+        "virtual_memory": ["dilshan", "siva", "bakia"],
+        "deadlocks": ["dilshan_deadlocks", "siva_deadlocks", "bakia_deadlocks"],
+    }
+
+    if concept_id in concept_cohorts:
+        keys = concept_cohorts[concept_id]
+        return [CANNED_STUDENTS[k] for k in keys if k in CANNED_STUDENTS]
+
+    # Dynamic fallback: load concept markdown and synthesize 3 generic profiles
+    md_file = _DATA_DIR / f"{concept_id}.md"
+    fallacy_tags: List[str] = []
+    if md_file.exists():
+        import re as _re
+        content = md_file.read_text(encoding="utf-8")
+        tag_pattern = _re.compile(r"^###\s+`?([A-Z0-9_]+)`?", _re.MULTILINE)
+        fallacy_tags = [m.group(1) for m in tag_pattern.finditer(content)]
+
+    if not fallacy_tags:
+        fallacy_tags = ["GENERIC_MISCONCEPTION_1", "GENERIC_MISCONCEPTION_2", "GENERIC_MISCONCEPTION_3"]
+
+    concept_label = concept_id.replace("_", " ").title()
+    generic_profiles: List[Dict[str, Any]] = []
+    student_ids = ["20231035053", "20231037154", "2023103057"]
+    student_names = ["dilshan", "siva", "bakia"]
+
+    for i in range(min(3, len(fallacy_tags))):
+        tag = fallacy_tags[i]
+        sid = student_ids[i]
+        name = student_names[i]
+        initial_text = f"My understanding of {concept_label} contains an error related to {tag.replace('_', ' ').lower()}."
+        generic_profiles.append({
+            "student_id": sid,
+            "name": name.capitalize(),
+            "concept_id": concept_id,
+            "initial_text": initial_text,
+            "initial_verdict": CriticVerdict(
+                verdict="MISCONCEPTION",
+                detected_flaw_tag=tag,
+                flaw_explanation=f"Detected misconception: {tag.replace('_', ' ').title()} for {concept_label}.",
+                violates_invariant=True,
+                confidence=0.85,
+            ),
+            "probe": generate_probe_for_flaw(tag, concept_id=concept_id),
+            "revision_text": f"I now understand the correct invariant for {concept_label} and the distinction around {tag.replace('_', ' ').lower()}.",
+            "revision_verdict": CriticVerdict(
+                verdict="MASTERED",
+                detected_flaw_tag=None,
+                flaw_explanation=None,
+                violates_invariant=False,
+                confidence=0.90,
+            ),
+            "session_record": StudentSessionRecord(
+                student_id=sid,
+                concept_id=concept_id,
+                iteration_count=1,
+                initial_text=initial_text,
+                probes_issued=[generate_probe_for_flaw(tag, concept_id=concept_id).counter_example_scenario],
+                student_revisions=[f"Corrected understanding of {concept_label} invariants."],
+                final_verdict="MASTERED",
+                tagged_fallacy=tag,
+            ),
+        })
+
+    return generic_profiles

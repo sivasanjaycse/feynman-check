@@ -78,12 +78,30 @@ _PROMPTS_DIR = Path(__file__).resolve().parent / "prompts"
 # ---------------------------------------------------------------------------
 
 def load_concept_ground_truth(concept_id: str = "virtual_memory") -> str:
-    """Load the ground-truth markdown invariant file for a concept."""
+    """Load the ground-truth markdown invariant file for a concept.
+
+    Raises FileNotFoundError with a helpful message if the concept file
+    is not found. Suggest similar concept IDs from data/concepts/ if available.
+    """
     concept_file = _DATA_DIR / f"{concept_id}.md"
     if concept_file.exists():
         return concept_file.read_text(encoding="utf-8")
-    # Fallback to in-memory stub invariant if file is missing
-    return INVARIANT_VIRTUAL_MEMORY.invariant_statement
+
+    # Try fuzzy match: find closest concept_id in data/concepts/
+    available = [f.stem for f in _DATA_DIR.glob("*.md")] if _DATA_DIR.exists() else []
+    suggestion = ""
+    if available:
+        # Simple prefix/substring suggestion
+        matches = [a for a in available if concept_id in a or a in concept_id]
+        if matches:
+            suggestion = f" Did you mean: {matches[0]}?"
+        else:
+            suggestion = f" Available concepts: {', '.join(available)}."
+    raise FileNotFoundError(
+        f"Concept file not found: data/concepts/{concept_id}.md{suggestion}\n"
+        f"Run: python scripts/feynman.py list-concepts"
+    )
+
 
 
 def load_prompt_template(name: str) -> str:
@@ -101,6 +119,7 @@ def load_prompt_template(name: str) -> str:
 def build_critic_messages(
     concept_ground_truth: str,
     student_text: str,
+    concept_id: str = "virtual_memory",
     prior_verdicts: Optional[List[Dict[str, Any]]] = None,
     prior_probes: Optional[List[Dict[str, Any]]] = None,
 ) -> List[Dict[str, str]]:
@@ -108,7 +127,7 @@ def build_critic_messages(
     system_prompt = load_prompt_template("critic")
 
     user_sections = [
-        f"### GROUND TRUTH CONCEPT INVARIANTS:\n{concept_ground_truth}",
+        f"### GROUND TRUTH CONCEPT INVARIANTS:\nconcept_id: {concept_id}\n{concept_ground_truth}",
     ]
 
     if prior_verdicts and prior_probes:
@@ -123,8 +142,8 @@ def build_critic_messages(
 
     user_sections.append(
         f"### STUDENT SUBMISSION TO EVALUATE:\n\"{student_text}\"\n\n"
-        "Evaluate this submission against the ground truth invariants. "
-        "Strictly catch semantic conflations (e.g. TLB miss directly causing disk access). "
+        "Evaluate this submission against the ground truth invariants above. "
+        "Catch semantic conflations, missing distinctions, or violations of the stated invariants. "
         "Return a structured CriticVerdict."
     )
 
@@ -138,12 +157,13 @@ def build_probe_messages(
     concept_ground_truth: str,
     student_text: str,
     verdict: Dict[str, Any],
+    concept_id: str = "virtual_memory",
 ) -> List[Dict[str, str]]:
     """Builds prompt messages for the Socratic counter-example generator."""
     system_prompt = load_prompt_template("probe")
 
     user_sections = [
-        f"### GROUND TRUTH CONCEPT INVARIANTS:\n{concept_ground_truth}",
+        f"### GROUND TRUTH CONCEPT INVARIANTS:\nconcept_id: {concept_id}\n{concept_ground_truth}",
         f"### STUDENT SUBMISSION (CONTAINING MISCONCEPTION):\n\"{student_text}\"",
         f"### CRITIC DIAGNOSIS:\n"
         f"- Flaw Tag: {verdict.get('detected_flaw_tag')}\n"
@@ -337,6 +357,7 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
         messages = build_critic_messages(
             concept_ground_truth=ground_truth,
             student_text=latest_sub.get("text", ""),
+            concept_id=concept_id,
             prior_verdicts=prior_verdicts,
             prior_probes=prior_probes,
         )
@@ -385,6 +406,7 @@ def build_flow(call: Callable = complete) -> SimpleNamespace:
             concept_ground_truth=ground_truth,
             student_text=latest_sub.get("text", "") if latest_sub else "",
             verdict=latest_verdict or {},
+            concept_id=concept_id,
         )
 
         probe: ProbeMessage = call(

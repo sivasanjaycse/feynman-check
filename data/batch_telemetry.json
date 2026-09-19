@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-19T10:25:37.145210+00:00",
+  "timestamp": "2026-09-19T11:29:40.089117+00:00",
   "total_students_scanned": 4,
-  "cluster_count": 1,
+  "cluster_count": 2,
   "clusters": {
     "TLB_MISS_EQUALS_DISK_IO": {
       "fallacy_tag": "TLB_MISS_EQUALS_DISK_IO",
@@ -17,6 +17,19 @@
         "The CPU cache miss forces the OS to read secondary storage swap partition to find the frame."
       ],
       "remediation_suggestion": "Draw the 3-Tier Hierarchy on chalkboard:\n  (1) TLB Cache -> (2) RAM Page Table -> (3) Disk Swap.\nKey Takeaway: A TLB miss is resolved in RAM 99% of the time via page table walking without disk involvement. Disk read only occurs if Page Table valid bit is 0."
+    },
+    "INHERITANCE_IS_CODE_REUSE_ONLY": {
+      "fallacy_tag": "INHERITANCE_IS_CODE_REUSE_ONLY",
+      "occurrence_count": 1,
+      "affected_student_ids": [
+        "20231035053"
+      ],
+      "sample_student_quotes": [
+        "Inheritance  ensures reusablity and  helps in managing relationships in programming . It avoids redundancy and theref...",
+        "No in the above scenario u mentioned . We cannot inherrit arryalist directly because Last-In-First-Out rule will be v...",
+        "If car's object is used  , in that case , car's move method is executed or else vehicle's implementation will be done"
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  If Stack extends ArrayList just to reuse add(), a Stack IS NOT an ArrayList. Callers can use get(index) on a Stack, breaking the Stack's LIFO contract. This violates the Liskov Substitution Principle and causes bugs.\nKey Takeaway: If Stack extends ArrayList just to reuse add(), a Stack IS NOT an ArrayList. Callers can use get(index) on a Stack, breaking the Stack's LIFO contract. This violates the Liskov Substitution Principle and causes bugs."
     }
   }
 }

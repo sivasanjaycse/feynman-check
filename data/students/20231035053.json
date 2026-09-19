@@ -1,16 +1,16 @@
 {
   "student_id": "20231035053",
-  "concept_id": "virtual_memory",
+  "concept_id": "oop_principles",
   "iteration_count": 2,
-  "initial_text": "Virtual Memory is a great concept. My staff thaught me well",
+  "initial_text": "Inheritance  ensures reusablity and  helps in managing relationships in programming . It avoids redundancy and therefore code maintainablity and code quality will also be high .",
   "probes_issued": [
-    "Consider a multi-threaded web server running on a system with 64 GB of physical RAM. Thread A just finished processing a request and loaded a frequently used configuration page into physical RAM. Thread B, running on a different CPU core, has its TLB flushed due to a context switch. When Thread B now accesses that same configuration page's virtual address, the hardware TLB lookup returns a miss. The page is guaranteed to be sitting in physical RAM — it was placed there only microseconds ago by Thread A. In this situation, does the hardware need to involve the operating system kernel or initiate a disk read to fulfill this memory access, or is there something that can be resolved entirely within the hardware using data already present in main memory? What specifically does the hardware need to locate before it can conclude the page is truly absent from physical memory?",
-    "Consider this situation: A process has been running for several minutes, and all of its currently active pages are resident in physical RAM. The valid/present bit is set to 1 for every one of these pages in the page table. Now, a context switch occurs to a different process, and the new CPU core clears its TLB entirely. The original process is scheduled back in and attempts to access a memory address corresponding to one of those active pages. The page is definitely in RAM — no one has swapped it out. If the student's assumption is that a TLB miss always results in disk I/O, what would happen in this scenario? Would the system be forced to read from disk when the data is already sitting right there in physical memory, and if so, what would be the purpose of the page table stored in RAM?"
+    "Consider a class `ArrayList` that provides methods like `add(element)`, `get(index)`, `remove(index)`, and `size()`. To avoid rewriting all of these methods, a developer creates `Stack extends ArrayList` — reasoning that Stack needs a list's functionality and inheritance is the best way to reuse code. Now, a client program holding a `Stack` reference calls `stack.get(2)` to inspect the third element from the bottom, and also calls `stack.add(0, element)` to insert an item at the bottom of the stack. Both of these operations succeed because they were inherited from ArrayList purely for code reuse.\n\nGiven that Stack's defining contract is Last-In-First-Out (LIFO), and its only meaningful operations should be `push` and `pop`: does this design still allow every caller of Stack to rely on it behaving as a Stack? What happens to the integrity of the Stack's contract when methods inherited just for reuse allow operations that contradict that contract?",
+    "Let's consider a scenario where you have a class `Vehicle` with a method `move()`. You create a subclass `Car` that extends `Vehicle` and overrides `move()` to implement car-specific movement. Now, imagine you have a `Vehicle` reference pointing to a `Car` object. According to your statement, when you call `move()` on this reference, will the `Car`'s implementation of `move()` be executed, or will it execute the `Vehicle`'s implementation? Explain your reasoning."
   ],
   "student_revisions": [
-    "Oh.... I dont know that",
-    "Student submitted empty revision."
+    "No in the above scenario u mentioned . We cannot inherrit arryalist directly because Last-In-First-Out rule will be violated by adding element at positions at middle . So only when there's some dependency is needed , inheritance can be employed",
+    "If car's object is used  , in that case , car's move method is executed or else vehicle's implementation will be done"
   ],
   "final_verdict": "UNRESOLVED_ESCALATE",
-  "tagged_fallacy": null
+  "tagged_fallacy": "INHERITANCE_IS_CODE_REUSE_ONLY"
 }
