@@ -41,6 +41,24 @@ DEFAULT_TELEMETRY_PATH: Path = Path("data/batch_telemetry.json")
 DEFAULT_REPORTS_DIR: Path = Path("reports")
 DEFAULT_PROMPTS_DIR: Path = Path("demo/feynman/prompts")
 
+
+# ---------------------------------------------------------------------------
+# Mock Email Sender — Replace with real SMTP for production
+# ---------------------------------------------------------------------------
+
+def send_email(
+    subject: str,
+    body: str,
+    recipient: str = "professor@university.edu",
+) -> None:
+    """Mock email sender — prints to terminal. Replace with real SMTP for production."""
+    print("\n" + "=" * 70)
+    print(f"\033[1;33m📧 EMAIL SENT TO: {recipient}\033[0m")
+    print(f"\033[1m📋 SUBJECT: {subject}\033[0m")
+    print("-" * 70)
+    print(body)
+    print("=" * 70 + "\n")
+
 # Curated offline fallback knowledge base for instant demo execution
 FALLACY_KNOWLEDGE_BASE: Dict[str, Dict[str, str]] = {
     "TLB_MISS_EQUALS_DISK_IO": {
@@ -136,17 +154,26 @@ def load_concept_fallacies_from_markdown(
         return {}
 
     fallacies: Dict[str, Dict[str, str]] = {}
-    tag_pattern = re.compile(r"^###\s+`?([A-Z0-9_]+)`?", re.MULTILINE)
+    tag_pattern = re.compile(r"^###\s+`([A-Z0-9_]+)`", re.MULTILINE)
     matches = list(tag_pattern.finditer(content))
+    if not matches:
+        # Fallback for files without backticks
+        tag_pattern = re.compile(r"^###\s+([A-Z0-9_]{3,})", re.MULTILINE)
+        matches = list(tag_pattern.finditer(content))
 
     for i, match in enumerate(matches):
         tag = match.group(1).strip()
+        if tag == "I" or tag.startswith("INVARIANT"):
+            continue
         start = match.end()
         end = matches[i + 1].start() if i + 1 < len(matches) else len(content)
         block = content[start:end]
 
         desc_m = re.search(r"-\s+\*\*Description:\*\*\s*(.+?)(?=\n-|\n\n|$)", block, re.DOTALL)
         desc = desc_m.group(1).strip().replace("\n", " ") if desc_m else ""
+
+        example_m = re.search(r"-\s+\*\*Example flawed claim:\*\*\s*(.+?)(?=\n-|\n\n|$)", block, re.DOTALL)
+        example_claim = example_m.group(1).strip().replace("\n", " ") if example_m else ""
 
         counter_m = re.search(r"-\s+\*\*Pedagogical counter:\*\*\s*(.+?)(?=\n-|\n\n|$)", block, re.DOTALL)
         counter = counter_m.group(1).strip().replace("\n", " ") if counter_m else ""
@@ -165,6 +192,8 @@ def load_concept_fallacies_from_markdown(
         fallacies[tag] = {
             "title": title,
             "derailment": derailment,
+            "example_claim": example_claim,
+            "pedagogical_counter": counter,
             "remediation_suggestion": remediation,
         }
 
@@ -173,7 +202,7 @@ def load_concept_fallacies_from_markdown(
 
 def get_concept_fallacy_info(
     fallacy_tag: str,
-    concept_id: str = "virtual_memory",
+    concept_id: str = "oop_lecture_1",
     concepts_dir: Path | str = DEFAULT_CONCEPTS_DIR,
 ) -> Dict[str, str]:
     """
@@ -278,7 +307,7 @@ def aggregate_cohort_telemetry(
 
     clusters: Dict[str, BatchMisconceptionCluster] = {}
     for tag, group_records in groups.items():
-        concept_id = group_records[0].concept_id if group_records else "virtual_memory"
+        concept_id = group_records[0].concept_id if group_records else "oop_lecture_1"
 
         # Collect distinct quotes from initial text and revisions
         quotes: List[str] = []
@@ -355,7 +384,7 @@ def check_escalation_threshold(
 
 def generate_instructor_alert(
     cluster: BatchMisconceptionCluster,
-    concept_id: str = "virtual_memory",
+    concept_id: str = "oop_lecture_1",
     reports_dir: Path | str = DEFAULT_REPORTS_DIR,
     concepts_dir: Path | str = DEFAULT_CONCEPTS_DIR,
     prompts_dir: Path | str = DEFAULT_PROMPTS_DIR,
@@ -594,6 +623,29 @@ def check_and_escalate_batch(
                 report.model_dump(),
                 produced_by="agent:batch_aggregator",
             )
+
+        # --- send_email() when threshold is reached ---
+        email_subject = (
+            f"[CONCEPT GAP ALERT] {cluster.fallacy_tag} — "
+            f"{cluster.occurrence_count} students affected"
+        )
+        student_list = ", ".join(cluster.affected_student_ids)
+        sample_quotes = "\n".join(
+            f"  - \"{q}\"" for q in cluster.sample_student_quotes[:3]
+        )
+        email_body = (
+            f"Dear Professor,\n\n"
+            f"Our Feynman Check system has detected a recurring misconception "
+            f"across {cluster.occurrence_count} students.\n\n"
+            f"Misconception: {cluster.fallacy_tag}\n"
+            f"Affected Students: {student_list}\n\n"
+            f"Sample Student Responses:\n{sample_quotes}\n\n"
+            f"Suggested Remediation:\n{cluster.remediation_suggestion}\n\n"
+            f"This alert was automatically generated when {cluster.occurrence_count} "
+            f"or more students exhibited the same fallacy (threshold = {threshold}).\n\n"
+            f"— Feynman Check Agent"
+        )
+        send_email(subject=email_subject, body=email_body)
 
         if interactive:
             report = escalate_to_professor(report, mode="cli")

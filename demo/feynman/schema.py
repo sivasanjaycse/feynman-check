@@ -69,10 +69,11 @@ class StudentSessionRecord(BaseModel):
 
     student_id: str
     concept_id: str
-    iteration_count: int = Field(default=0, ge=0, le=2)
+    lecture_id: Optional[str] = None
+    iteration_count: int = Field(default=0, ge=0, le=5)
     initial_text: str
-    probes_issued: List[str] = Field(default_factory=list, max_length=2)
-    student_revisions: List[str] = Field(default_factory=list, max_length=2)
+    probes_issued: List[str] = Field(default_factory=list, max_length=5)
+    student_revisions: List[str] = Field(default_factory=list, max_length=5)
     final_verdict: Literal["MASTERED", "UNRESOLVED_ESCALATE", "ABANDONED"]
     tagged_fallacy: Optional[str] = None
 

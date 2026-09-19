@@ -117,7 +117,7 @@ class TestStudentSessionRecordSchema:
             StudentSessionRecord(
                 student_id="s1",
                 concept_id="vm",
-                iteration_count=3,  # Max is 2
+                iteration_count=6,  # Max is 5
                 initial_text="x",
                 final_verdict="MASTERED",
             )

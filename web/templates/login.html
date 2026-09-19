@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feynman Check — Login</title>
+  <meta name="description" content="Feynman Check: AI-powered Socratic revision for OOP concepts">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="logo">🧠</div>
+      <h1>Feynman Check</h1>
+      <p class="subtitle">Socratic Revision for OOP Concepts</p>
+
+      <!-- ERROR_MSG -->
+
+      <form method="post" action="/login">
+        <div class="form-group">
+          <label for="roll_number">Roll Number</label>
+          <input type="text" id="roll_number" name="roll_number"
+                 placeholder="e.g. 2023101001" autofocus required>
+        </div>
+        <button type="submit" class="btn-primary" id="login-btn">Start Revision</button>
+      </form>
+
+      <div class="demo-hint">
+        <p style="margin-bottom: 8px; font-weight: 600; color: var(--text-muted);">Demo Students (Click to autofill):</p>
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 0.82rem;">
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101001';return false;" style="color: var(--accent); text-decoration: none;">2023101001 — Alice</a>
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101002';return false;" style="color: var(--accent); text-decoration: none;">2023101002 — Bob</a>
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101003';return false;" style="color: var(--accent); text-decoration: none;">2023101003 — Charlie</a>
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101004';return false;" style="color: var(--accent); text-decoration: none;">2023101004 — Diana</a>
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101005';return false;" style="color: var(--accent); text-decoration: none;">2023101005 — Eve</a>
+          <a href="#" onclick="document.getElementById('roll_number').value='2023101006';return false;" style="color: var(--accent); text-decoration: none;">2023101006 — Frank</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

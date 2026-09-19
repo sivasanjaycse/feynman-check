@@ -34,3 +34,10 @@ Your goal is to evaluate a student's explanation against the supplied Ground Tru
      "violates_invariant": true | false,
      "confidence": 0.0 to 1.0
    }
+
+5. MASTERED THRESHOLD:
+   - If the student demonstrates correct understanding of the core invariant, even if phrased informally or with casual language, return MASTERED.
+   - Do NOT keep probing for edge-case perfection. Test the CORE invariant, not exhaustive depth.
+   - If the student has correctly addressed a previously detected flaw in a revision round, that counts as MASTERED for that invariant.
+   - When in doubt between MASTERED and AMBIGUOUS, lean toward MASTERED if the key concept is present.
+

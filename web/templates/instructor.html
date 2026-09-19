@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feynman Check — Instructor Dashboard & Alert Monitor</title>
+  <meta name="description" content="Instructor gap detection monitor, telemetry clusters, and automated email escalation status">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    .instructor-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 30px 20px;
+    }
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 24px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 16px;
+    }
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+    .stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 18px;
+    }
+    .stat-num {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    .stat-label {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+    .cluster-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 16px;
+    }
+    .cluster-card.triggered {
+      border-color: #ef4444;
+      background: rgba(239, 68, 68, 0.05);
+    }
+    .cluster-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .badge-triggered {
+      background: #ef4444;
+      color: white;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .badge-monitoring {
+      background: #f59e0b;
+      color: black;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 0.75rem;
+      font-weight: 700;
+    }
+    .progress-bar-bg {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+      height: 10px;
+      overflow: hidden;
+      margin: 10px 0;
+    }
+    .progress-bar-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width 0.3s ease;
+    }
+    .progress-bar-fill.danger {
+      background: #ef4444;
+    }
+    .email-box {
+      background: #111827;
+      border: 1px dashed #f59e0b;
+      border-radius: 8px;
+      padding: 14px;
+      font-family: monospace;
+      font-size: 0.85rem;
+      margin-top: 14px;
+      white-space: pre-wrap;
+      color: #fde68a;
+    }
+    .student-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+    .student-table th, .student-table td {
+      padding: 10px 14px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 0.9rem;
+    }
+    .student-table th {
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+  </style>
+</head>
+<body>
+  <div class="instructor-container">
+    <div class="top-bar">
+      <div>
+        <h1>👨‍🏫 Instructor Monitor</h1>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
+          Real-time Misconception Clusters & Email Escalation Trigger
+        </p>
+      </div>
+      <div>
+        <a href="/dashboard" class="btn-secondary" style="margin-right: 8px;">Student Dashboard</a>
+        <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄 Refresh</button>
+      </div>
+    </div>
+
+    <!-- Overview Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="total-students">0 / 6</div>
+        <div class="stat-label">Students Completed Revision</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="active-clusters">0</div>
+        <div class="stat-label">Active Misconception Clusters</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color: #f59e0b;">$\ge 3$</div>
+        <div class="stat-label">Alert Escalation Threshold</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" id="emails-triggered" style="color: #10b981;">0</div>
+        <div class="stat-label">Emails Dispatched</div>
+      </div>
+    </div>
+
+    <!-- Active Clusters -->
+    <h2 style="margin-bottom: 16px; font-size: 1.25rem;">📊 Fallacy Clusters (Cohort Telemetry)</h2>
+    <div id="clusters-container">
+      <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
+        No misconceptions clustered yet. When students complete revisions with common flaws, they will cluster here.
+      </div>
+    </div>
+
+    <!-- Completed Student Sessions -->
+    <h2 style="margin: 32px 0 16px 0; font-size: 1.25rem;">👥 Completed Student Sessions</h2>
+    <div class="cluster-card" style="padding: 0; overflow-x: auto;">
+      <table class="student-table">
+        <thead>
+          <tr>
+            <th>Roll Number</th>
+            <th>Lecture</th>
+            <th>Final Verdict</th>
+            <th>Tagged Fallacy</th>
+            <th>Rounds</th>
+          </tr>
+        </thead>
+        <tbody id="student-rows">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records saved yet.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    async function loadData() {
+      try {
+        const res = await fetch('/api/instructor');
+        const data = await res.json();
+
+        // Update stats
+        document.getElementById('total-students').textContent = `${data.total_students} / 6`;
+        document.getElementById('active-clusters').textContent = data.cluster_count;
+        document.getElementById('emails-triggered').textContent = data.alerts_count;
+
+        // Render clusters
+        const cContainer = document.getElementById('clusters-container');
+        if (data.clusters && Object.keys(data.clusters).length > 0) {
+          cContainer.innerHTML = '';
+          for (const [tag, c] of Object.entries(data.clusters)) {
+            const count = c.occurrence_count;
+            const isTriggered = count >= data.threshold;
+            const pct = Math.min(100, Math.round((count / data.threshold) * 100));
+
+            const card = document.createElement('div');
+            card.className = `cluster-card ${isTriggered ? 'triggered' : ''}`;
+            card.innerHTML = `
+              <div class="cluster-header">
+                <div>
+                  <h3 style="margin: 0; font-size: 1.1rem; color: ${isTriggered ? '#ef4444' : 'var(--text-primary)'};">
+                    ${isTriggered ? '🚨' : '⚠️'} ${tag}
+                  </h3>
+                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
+                    Affected Students: <strong>${c.affected_student_ids.join(', ')}</strong> (${count} / ${data.threshold} threshold)
+                  </div>
+                </div>
+                <div>
+                  <span class="${isTriggered ? 'badge-triggered' : 'badge-monitoring'}">
+                    ${isTriggered ? 'EMAIL DISPATCHED' : 'MONITORING'}
+                  </span>
+                </div>
+              </div>
+
+              <div class="progress-bar-bg">
+                <div class="progress-bar-fill ${isTriggered ? 'danger' : ''}" style="width: ${pct}%;"></div>
+              </div>
+
+              <div style="font-size: 0.85rem; margin-top: 8px;">
+                <strong>Suggested Remediation:</strong> ${c.remediation_suggestion}
+              </div>
+
+              ${isTriggered ? `
+                <div class="email-box">
+📧 <strong>AUTOMATED EMAIL DISPATCHED TO: professor@university.edu</strong>
+📋 <strong>SUBJECT:</strong> [CONCEPT GAP ALERT] ${tag} — ${count} students affected
+--------------------------------------------------------------------------------
+Dear Professor,
+Our Feynman Check system has detected a recurring misconception across ${count} students.
+Affected: ${c.affected_student_ids.join(', ')}
+Key Remediation: ${c.remediation_suggestion}
+                </div>
+              ` : ''}
+            `;
+            cContainer.appendChild(card);
+          }
+        } else {
+          cContainer.innerHTML = `
+            <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              No misconceptions clustered yet. When students complete revisions with common flaws, they will cluster here.
+            </div>
+          `;
+        }
+
+        // Render student rows
+        const sBody = document.getElementById('student-rows');
+        if (data.students && data.students.length > 0) {
+          sBody.innerHTML = '';
+          for (const s of data.students) {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td><strong>${s.student_id}</strong></td>
+              <td>${s.concept_id}</td>
+              <td>
+                <span class="badge ${s.final_verdict === 'MASTERED' ? 'badge-mastered' : 'badge-unresolved'}">
+                  ${s.final_verdict}
+                </span>
+              </td>
+              <td><code>${s.tagged_fallacy || 'None (Mastered)'}</code></td>
+              <td>${s.iteration_count}</td>
+            `;
+            sBody.appendChild(tr);
+          }
+        } else {
+          sBody.innerHTML = `
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records saved yet.</td>
+            </tr>
+          `;
+        }
+      } catch (err) {
+        console.error('Failed to load instructor data', err);
+      }
+    }
+
+    loadData();
+    // Auto-refresh every 5 seconds
+    setInterval(loadData, 5000);
+  </script>
+</body>
+</html>

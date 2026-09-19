@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feynman Check — Lecture {{LECTURE_NUM}}: {{LECTURE_TITLE}}</title>
+  <meta name="description" content="Socratic revision session for {{LECTURE_TITLE}}">
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <div class="chat-container">
+    <!-- Header -->
+    <div class="chat-header">
+      <a href="/dashboard" class="back-link" id="back-to-dashboard">← Dashboard</a>
+      <div class="lecture-info">
+        <span class="lecture-tag">Lecture {{LECTURE_NUM}}</span>
+        <h2>{{LECTURE_TITLE}}</h2>
+      </div>
+      <span style="font-size:0.85rem;color:var(--text-muted)">{{STUDENT_NAME}}</span>
+    </div>
+
+    <!-- Messages -->
+    <div class="chat-messages" id="chat-messages">
+      <!-- Opening question from the model -->
+      <div class="message agent">
+        <div class="label">Feynman Tutor</div>
+        <div>{{OPENING_QUESTION}}</div>
+      </div>
+    </div>
+
+    <!-- Typing indicator -->
+    <div class="typing-indicator" id="typing-indicator">
+      <span></span><span></span><span></span>
+    </div>
+
+    <!-- Input -->
+    <div class="chat-input-area" id="chat-input-area">
+      <textarea id="chat-input" placeholder="Type your explanation..." rows="1"></textarea>
+      <button class="btn-send" id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <!-- Report Overlay -->
+  <div class="report-overlay" id="report-overlay">
+    <div class="report-card" id="report-card">
+      <h2>📋 Session Report</h2>
+      <div id="report-content"></div>
+      <div class="report-actions">
+        <a href="/dashboard" class="btn-primary" style="text-align:center;text-decoration:none;display:inline-block;" id="back-btn">Back to Dashboard</a>
+        <button class="btn-secondary" id="close-report-btn" onclick="document.getElementById('report-overlay').classList.remove('show')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ============================================================
+    // Chat Logic
+    // ============================================================
+
+    const LECTURE_ID = "{{LECTURE_ID}}";
+    let sessionId = null;
+    let chatEnded = false;
+
+    const messagesEl = document.getElementById("chat-messages");
+    const inputEl = document.getElementById("chat-input");
+    const sendBtn = document.getElementById("send-btn");
+    const typingEl = document.getElementById("typing-indicator");
+    const inputArea = document.getElementById("chat-input-area");
+    const reportOverlay = document.getElementById("report-overlay");
+    const reportContent = document.getElementById("report-content");
+
+    // Auto-resize textarea
+    inputEl.addEventListener("input", () => {
+      inputEl.style.height = "auto";
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + "px";
+    });
+
+    // Send on Enter (Shift+Enter for newline)
+    inputEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    sendBtn.addEventListener("click", sendMessage);
+
+    function addMessage(text, role) {
+      const div = document.createElement("div");
+      div.className = `message ${role}`;
+      const label = document.createElement("div");
+      label.className = "label";
+      label.textContent = role === "agent" ? "Feynman Tutor" : "You";
+      div.appendChild(label);
+      const body = document.createElement("div");
+      body.textContent = text;
+      div.appendChild(body);
+      messagesEl.appendChild(div);
+      messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    function showTyping(show) {
+      typingEl.classList.toggle("show", show);
+      if (show) messagesEl.scrollTop = messagesEl.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const text = inputEl.value.trim();
+      if (!text || chatEnded) return;
+
+      addMessage(text, "student");
+      inputEl.value = "";
+      inputEl.style.height = "auto";
+      sendBtn.disabled = true;
+      showTyping(true);
+
+      try {
+        const resp = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            lecture_id: LECTURE_ID,
+            message: text,
+            session_id: sessionId,
+          }),
+        });
+
+        const data = await resp.json();
+        showTyping(false);
+
+        if (data.error) {
+          addMessage("⚠️ " + data.error, "agent");
+          sendBtn.disabled = false;
+          return;
+        }
+
+        sessionId = data.session_id;
+
+        if (data.response) {
+          addMessage(data.response, "agent");
+        }
+
+        if (data.status === "mastered" || data.status === "unresolved") {
+          chatEnded = true;
+          inputArea.innerHTML = `
+            <div style="text-align:center;width:100%;padding:0.5rem;color:var(--text-secondary);font-size:0.9rem;">
+              Session complete.
+              <button class="btn-secondary" onclick="document.getElementById('report-overlay').classList.add('show')" style="margin-left:0.8rem;">View Report</button>
+            </div>`;
+          if (data.report) {
+            renderReport(data.report);
+            // Auto-show report after a short delay
+            setTimeout(() => reportOverlay.classList.add("show"), 1500);
+          }
+        } else {
+          sendBtn.disabled = false;
+        }
+
+      } catch (err) {
+        showTyping(false);
+        addMessage("⚠️ Connection error: " + err.message, "agent");
+        sendBtn.disabled = false;
+      }
+    }
+
+    // ============================================================
+    // Report Rendering
+    // ============================================================
+
+    function renderReport(report) {
+      const isMastered = report.final_verdict === "MASTERED";
+
+      let html = `
+        <span class="verdict-badge ${isMastered ? 'mastered' : 'unresolved'}">
+          ${isMastered ? '✅ MASTERED' : '⚠️ NEEDS REVIEW'}
+        </span>`;
+
+      if (report.tagged_fallacy) {
+        html += `<p style="color:var(--text-secondary);font-size:0.9rem;margin-bottom:1.5rem;">
+          Detected fallacy: <strong style="color:var(--warning)">${report.tagged_fallacy.replace(/_/g, ' ')}</strong>
+        </p>`;
+      }
+
+      html += `<div class="report-section">
+        <h3>🔍 Internal Observations (${report.total_rounds} round${report.total_rounds > 1 ? 's' : ''})</h3>`;
+
+      for (const round of report.rounds) {
+        html += `
+          <div class="round-item">
+            <div class="round-header">
+              <span class="round-num">Round ${round.round}</span>
+              <span class="round-verdict ${round.verdict}">${round.verdict}</span>
+            </div>`;
+
+        if (round.student_text) {
+          html += `<div class="detail"><strong>Student said:</strong> "${truncate(round.student_text, 150)}"</div>`;
+        }
+        if (round.flaw_tag) {
+          html += `<div class="detail"><strong>Flaw detected:</strong> ${round.flaw_tag.replace(/_/g, ' ')} (confidence: ${(round.confidence * 100).toFixed(0)}%)</div>`;
+        }
+        if (round.flaw_explanation) {
+          html += `<div class="detail"><strong>Analysis:</strong> ${round.flaw_explanation}</div>`;
+        }
+        if (round.probe_issued) {
+          html += `<div class="detail"><strong>Probe issued:</strong> "${truncate(round.probe_issued, 200)}"</div>`;
+        }
+
+        html += `</div>`;
+      }
+
+      html += `</div>`;
+      reportContent.innerHTML = html;
+    }
+
+    function truncate(str, len) {
+      return str.length > len ? str.substring(0, len) + "..." : str;
+    }
+  </script>
+</body>
+</html>
