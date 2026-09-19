@@ -154,6 +154,35 @@
       </div>
     </div>
 
+    <!-- Fallacy Discovery Agent Card -->
+    <div class="stat-card" style="margin-bottom: 24px; padding: 20px;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <div>
+          <h2 style="font-size: 1.15rem; margin: 0;">🧠 Fallacy Discovery Agent</h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">
+            Extracts common misconceptions, flawed student claims, and pedagogical counters directly from lecture concept notes.
+          </p>
+        </div>
+        <span class="badge" style="background: var(--accent); color: black; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AGENT</span>
+      </div>
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <select id="discover-lecture-select" style="padding: 8px 12px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+          <option value="oop_lecture_1">Lecture 1: Classes & Objects</option>
+          <option value="oop_lecture_2">Lecture 2: Encapsulation & Access Modifiers</option>
+          <option value="oop_lecture_3">Lecture 3: Inheritance — IS-A vs HAS-A</option>
+          <option value="oop_lecture_4">Lecture 4: Polymorphism</option>
+          <option value="oop_lecture_5">Lecture 5: Abstract Classes & Interfaces</option>
+          <option value="oop_lecture_6">Lecture 6: Exception Handling</option>
+          <option value="oop_lecture_7">Lecture 7: SOLID Principles</option>
+        </select>
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
+          <input type="checkbox" id="discover-force-checkbox"> Re-synthesize (Force)
+        </label>
+        <button id="run-discover-btn" onclick="triggerFallacyDiscovery()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Run Discovery</button>
+      </div>
+      <div id="discover-result" style="display: none; margin-top: 16px; padding: 14px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);"></div>
+    </div>
+
     <!-- Active Clusters -->
     <h2 style="margin-bottom: 16px; font-size: 1.25rem;">📊 Fallacy Clusters (Cohort Telemetry)</h2>
     <div id="clusters-container">
@@ -281,6 +310,64 @@ Key Remediation: ${c.remediation_suggestion}
         }
       } catch (err) {
         console.error('Failed to load instructor data', err);
+      }
+    }
+
+    async function triggerFallacyDiscovery() {
+      const select = document.getElementById('discover-lecture-select');
+      const forceBox = document.getElementById('discover-force-checkbox');
+      const btn = document.getElementById('run-discover-btn');
+      const resDiv = document.getElementById('discover-result');
+
+      const conceptId = select.value;
+      const force = forceBox.checked;
+
+      btn.disabled = true;
+      btn.textContent = 'Analyzing...';
+      resDiv.style.display = 'block';
+      resDiv.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">⏳ Agent reading lecture invariants, transcript, and diagnosing common fallacies...</div>';
+
+      try {
+        const resp = await fetch('/api/discover-fallacies', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ concept_id: conceptId, force: force, write: true }),
+        });
+        const data = await resp.json();
+
+        if (data.error) {
+          resDiv.innerHTML = `<div style="color: #ef4444; font-size: 0.85rem;">⚠️ Error: ${data.error}</div>`;
+        } else {
+          let html = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <strong style="color: var(--accent); font-size: 0.95rem;">✓ Discovered Fallacies for ${data.concept_id}:</strong>
+              <button onclick="document.getElementById('discover-result').style.display='none'" class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">Close</button>
+            </div>
+          `;
+          for (const f of data.fallacies) {
+            html += `
+              <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--accent);">
+                <div style="font-weight: bold; color: var(--text-primary); font-size: 0.85rem;"><code>${f.tag}</code></div>
+                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px;"><strong>Description:</strong> ${f.description}</div>
+                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;"><strong>Flawed claim:</strong> "${f.example_claim}"</div>
+                <div style="color: #10b981; font-size: 0.8rem; margin-top: 2px;"><strong>Socratic Counter:</strong> ${f.pedagogical_counter}</div>
+              </div>
+            `;
+          }
+          if (data.opening_question) {
+            html += `
+              <div style="margin-top: 10px; font-size: 0.8rem; color: var(--accent);">
+                <strong>Diagnostic Opening Question:</strong> ${data.opening_question}
+              </div>
+            `;
+          }
+          resDiv.innerHTML = html;
+        }
+      } catch (err) {
+        resDiv.innerHTML = `<div style="color: #ef4444; font-size: 0.85rem;">⚠️ Network error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Run Discovery';
       }
     }
 

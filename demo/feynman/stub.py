@@ -23,7 +23,9 @@ from pydantic import BaseModel
 from .schema import (
     BatchMisconceptionCluster,
     ConceptInvariant,
+    ConceptFallacies,
     CriticVerdict,
+    DiscoveredFallacy,
     ProbeMessage,
     ProfessorEscalationReport,
     StudentSessionRecord,
@@ -1048,6 +1050,40 @@ class StubCompleter:
 
         if schema is BatchMisconceptionCluster or schema_name == "BatchMisconceptionCluster":
             return CANNED_CLUSTER
+
+        if schema is ConceptFallacies or schema_name == "ConceptFallacies":
+            concept_id = "concept_topic"
+            for m in messages:
+                content = m.get("content", "")
+                m_cid = re.search(r'CONCEPT (?:TOPIC )?ID:\s*([a-z0-9_]+)', content, re.IGNORECASE)
+                if m_cid:
+                    concept_id = m_cid.group(1)
+                    break
+            cid_title = concept_id.replace("_", " ").title()
+            return ConceptFallacies(
+                concept_id=concept_id,
+                fallacies=[
+                    DiscoveredFallacy(
+                        tag="AUTONOMOUS_CONCEPT_CONFLATION",
+                        description=f"Student conflates core mechanisms of {cid_title}.",
+                        example_claim=f"When using {cid_title}, I can bypass the core invariant without consequence.",
+                        pedagogical_counter="Consider a real implementation: what happens at runtime if this assumption is violated?",
+                    ),
+                    DiscoveredFallacy(
+                        tag="MISAPPLIED_SYNTAX_ASSUMPTION",
+                        description="Student assumes syntactic shorthand alters the underlying runtime contract.",
+                        example_claim="Writing the shorthand syntax executes independently of the lifecycle.",
+                        pedagogical_counter="Check the compiled bytecode/runtime execution: is the lifecycle actually altered?",
+                    ),
+                    DiscoveredFallacy(
+                        tag="BOUNDARY_CONDITION_OVERSIGHT",
+                        description="Student ignores edge cases where the abstraction breaks down.",
+                        example_claim="This rule holds under every possible input and scale.",
+                        pedagogical_counter="What happens when an unexpected null, empty, or concurrent access occurs?",
+                    ),
+                ],
+                opening_question=f"Hey! What's your understanding of the core mechanism in {cid_title}?",
+            )
 
         if schema is ProfessorEscalationReport or schema_name == "ProfessorEscalationReport":
             return CANNED_ESCALATION_REPORT
