@@ -1,0 +1,16 @@
+{
+  "student_id": "student_001",
+  "concept_id": "virtual_memory",
+  "iteration_count": 2,
+  "initial_text": "Virtual memory is great concept",
+  "probes_issued": [
+    "Consider a system with four active user processes, each sharing a large read-only library page. Process A loaded this shared page into a physical RAM frame just 2 milliseconds ago, and the page table entry for every process shows that Valid/Present bit is set to 1. Now Process B starts executing and tries to access an address within that same shared page. The address is not currently in Process B's TLB. If every TLB miss automatically meant the OS must fetch the page from secondary storage, what would happen to the system's disk every time a different process touches a page that is already sitting in RAM? Would the disk be spinning for pages that are demonstrably in main memory?",
+    "Consider this situation: A large scientific simulation process has been running for several minutes. One of its working-set pages was loaded into physical RAM just 2 milliseconds ago by the OS on behalf of a different thread sharing the same address space. Now, the CPU core executing the original thread performs a context switch that completely flushes its TLB entries. The very next instruction by that thread accesses an address within that same recently-loaded page. If every TLB miss automatically meant the OS had to fetch the page from disk, what would be happening to the disk drive right now? Does it make sense that the disk would be accessed for a page that was placed in RAM only 2 milliseconds ago and has not been swapped out?"
+  ],
+  "student_revisions": [
+    "Revised explanation acknowledging page table in RAM.",
+    "Revised explanation acknowledging page table in RAM."
+  ],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "EVASIVE_INCOMPLETE_RESPONSE"
+}

@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-09-19T07:35:40.447187+00:00",
-  "total_students_scanned": 4,
-  "cluster_count": 1,
+  "timestamp": "2026-09-19T09:16:26.084423+00:00",
+  "total_students_scanned": 5,
+  "cluster_count": 2,
   "clusters": {
     "TLB_MISS_EQUALS_DISK_IO": {
       "fallacy_tag": "TLB_MISS_EQUALS_DISK_IO",
@@ -19,6 +19,18 @@
         "TLB miss means data is not in memory so OS goes to swap space to fetch the page."
       ],
       "remediation_suggestion": "Draw the 3-Tier Hierarchy on chalkboard:\n  (1) TLB Cache -> (2) RAM Page Table -> (3) Disk Swap.\nKey Takeaway: A TLB miss is resolved in RAM 99% of the time via page table walking without disk involvement. Disk read only occurs if Page Table valid bit is 0."
+    },
+    "EVASIVE_INCOMPLETE_RESPONSE": {
+      "fallacy_tag": "EVASIVE_INCOMPLETE_RESPONSE",
+      "occurrence_count": 1,
+      "affected_student_ids": [
+        "student_001"
+      ],
+      "sample_student_quotes": [
+        "Virtual memory is great concept",
+        "Revised explanation acknowledging page table in RAM."
+      ],
+      "remediation_suggestion": "Review the foundational lecture invariants for Virtual Memory concerning Evasive Incomplete Response."
     }
   }
 }
