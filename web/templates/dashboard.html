@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
   <meta name="description" content="Select a lecture to start your Socratic revision session">
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
   <div class="dashboard-container">
     <div class="dashboard-header">
@@ -14,7 +16,6 @@
         <h1>📚 OOP Revision</h1>
       </div>
       <div class="user-info">
-        <a href="/instructor" class="logout-btn" style="background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.4); color: #a5b4fc; text-decoration: none;" target="_blank">👨‍🏫 Instructor Monitor</a>
         <span class="name">👋 {{STUDENT_NAME}} ({{STUDENT_ROLL}})</span>
         <a href="/logout" class="logout-btn" id="logout-btn">Logout</a>
       </div>
@@ -27,4 +28,5 @@
     </div>
   </div>
 </body>
+
 </html>

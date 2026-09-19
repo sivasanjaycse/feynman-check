@@ -1,0 +1,19 @@
+{
+  "student_id": "2023101002",
+  "concept_id": "oop_lecture_1",
+  "lecture_id": null,
+  "iteration_count": 3,
+  "initial_text": "class is blue print of real world object and  object is an instance of the class \nhere new dog() creates a object for the class",
+  "probes_issued": [
+    "Great explanation of classes and objects! Now, consider this: if constructors were just methods, what would happen here? ```java // Constructor as method? Dog d = new Dog(); d.Dog(); // Valid or error? ```",
+    "Good — constructors aren't regular methods, you're correct. Now consider:\n\n```java\nclass Team { static int members = 0; }\nTeam.members++;\n```\n\nIf static meant 'fixed,' what breaks when multiple Team objects increment `members`? Why does this compile without error?",
+    "I see where you're coming from. Let's look at this: ```java class Counter { static int count = 0; } Counter.count = 5; Counter.count = 10; ``` If static variables were fixed, what happens to the first assignment? Why does this compile without error?"
+  ],
+  "student_revisions": [
+    "constructor is a special method which creates and instantiate an object for the class \nso accessing the constructor as a method through object makes it ambiguous and so java doesn't allow it",
+    "static variable is fixed so this code might show some error",
+    "count changed to 5 and then to 10 in second assignment \nstatic variable is  a variable in shared memory location for all objects of a class so the syntax is vaid"
+  ],
+  "final_verdict": "MASTERED",
+  "tagged_fallacy": "STATIC_MEANS_CONSTANT"
+}

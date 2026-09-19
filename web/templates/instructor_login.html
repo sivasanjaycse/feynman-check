@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feynman Check — Instructor Access</title>
+  <meta name="description" content="Instructor login for Feynman Check monitoring dashboard">
+  <link rel="stylesheet" href="/static/style.css">
+  <style>
+    body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      background: var(--bg-main);
+    }
+    .login-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-color);
+      border-radius: 16px;
+      padding: 40px;
+      width: 100%;
+      max-width: 380px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+    .login-icon {
+      font-size: 2.5rem;
+      text-align: center;
+      margin-bottom: 8px;
+    }
+    .login-card h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 4px;
+      color: var(--text-primary);
+    }
+    .login-card .subtitle {
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      margin-bottom: 28px;
+    }
+    .form-group {
+      margin-bottom: 16px;
+    }
+    .form-group label {
+      display: block;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .form-group input {
+      width: 100%;
+      padding: 12px 14px;
+      background: var(--bg-main);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-primary);
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.2s;
+      box-sizing: border-box;
+      letter-spacing: 0.15em;
+    }
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+    .btn-login {
+      width: 100%;
+      padding: 12px;
+      background: var(--accent);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 8px;
+    }
+    .btn-login:hover { opacity: 0.88; }
+    .error {
+      color: var(--danger, #ef4444);
+      font-size: 0.85rem;
+      text-align: center;
+      margin-bottom: 12px;
+      padding: 8px 12px;
+      background: rgba(239,68,68,0.08);
+      border-radius: 6px;
+    }
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      text-decoration: none;
+    }
+    .back-link:hover { color: var(--accent); }
+    .badge {
+      display: inline-block;
+      background: rgba(239,68,68,0.12);
+      color: #ef4444;
+      border: 1px solid rgba(239,68,68,0.3);
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 16px;
+      display: block;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card">
+    <div class="login-icon">🔐</div>
+    <h1>Instructor Access</h1>
+    <p class="subtitle">Feynman Check — Monitoring Dashboard</p>
+    <span class="badge">Restricted — Staff Only</span>
+
+    <!-- ERROR_MSG -->
+
+    <form method="post" action="/instructor/login" id="instructor-login-form">
+      <div class="form-group">
+        <label for="pin">Access PIN</label>
+        <input
+          type="password"
+          id="pin"
+          name="pin"
+          placeholder="Enter instructor PIN"
+          autocomplete="current-password"
+          required
+          autofocus
+        >
+      </div>
+      <button type="submit" class="btn-login" id="login-btn">Access Dashboard →</button>
+    </form>
+
+    <a href="/" class="back-link">← Back to Student Login</a>
+  </div>
+</body>
+</html>

@@ -47,6 +47,9 @@ from demo.feynman.batch import (
 DB_PATH = os.environ.get("FEYNMAN_DB", "demo.db")
 TEMPLATES_DIR = Path(__file__).parent / "templates"
 
+# Instructor PIN — set INSTRUCTOR_PIN in .env for production; default is for demo only
+INSTRUCTOR_PIN = os.environ.get("INSTRUCTOR_PIN", "feynman2024")
+
 app = FastAPI(title="Feynman Check — OOP Revision Demo")
 
 # Mount static files
@@ -98,6 +101,11 @@ def _get_student(request: Request) -> Optional[Dict[str, str]]:
     return None
 
 
+def _get_instructor(request: Request) -> bool:
+    """Return True if the request has a valid instructor auth cookie."""
+    return request.cookies.get("instructor_auth") == "authenticated"
+
+
 # ---------------------------------------------------------------------------
 # Routes: Login
 # ---------------------------------------------------------------------------
@@ -116,7 +124,7 @@ def login(roll_number: str = Form(...)):
     roll = roll_number.strip()
     if roll not in DEMO_STUDENTS:
         html = _read_template("login.html")
-        html = html.replace("<!-- ERROR_MSG -->",
+        html = html.replace("<!-- ERROR_MSG_STUDENT -->",
                            '<p class="error">Roll number not found. Try one of: ' +
                            ", ".join(DEMO_STUDENTS.keys()) + "</p>")
         return HTMLResponse(html)
@@ -130,6 +138,38 @@ def login(roll_number: str = Form(...)):
 def logout():
     resp = RedirectResponse("/", status_code=303)
     resp.delete_cookie("student_roll")
+    return resp
+
+
+# ---------------------------------------------------------------------------
+# Routes: Instructor Login
+# ---------------------------------------------------------------------------
+
+@app.get("/instructor/login", response_class=HTMLResponse)
+def instructor_login_page(request: Request):
+    """Redirect to root — instructor login is now on the unified login page."""
+    if _get_instructor(request):
+        return RedirectResponse("/instructor", status_code=303)
+    return RedirectResponse("/", status_code=303)
+
+
+@app.post("/instructor/login")
+def instructor_login(pin: str = Form(...)):
+    if pin.strip() == INSTRUCTOR_PIN:
+        resp = RedirectResponse("/instructor", status_code=303)
+        resp.set_cookie("instructor_auth", "authenticated", max_age=3600, httponly=True)
+        return resp
+    # Wrong PIN — show error on the instructor tab of the unified login page
+    html = _read_template("login.html")
+    html = html.replace("<!-- ERROR_MSG_INSTRUCTOR -->",
+                        '<p class="error">Incorrect PIN. Please try again.</p>')
+    return HTMLResponse(html)
+
+
+@app.get("/instructor/logout")
+def instructor_logout():
+    resp = RedirectResponse("/", status_code=303)
+    resp.delete_cookie("instructor_auth")
     return resp
 
 
@@ -372,16 +412,19 @@ def report_api(session_id: str, request: Request):
 # ---------------------------------------------------------------------------
 
 @app.get("/instructor", response_class=HTMLResponse)
-def instructor_page():
-    """Instructor view showing live cohort misconception clusters and email triggers."""
+def instructor_page(request: Request):
+    """Instructor view — requires instructor PIN authentication."""
+    if not _get_instructor(request):
+        return RedirectResponse("/instructor/login", status_code=303)
     html = _read_template("instructor.html")
     return HTMLResponse(html)
 
 
 @app.get("/api/instructor")
-def api_instructor():
+def api_instructor(request: Request):
     """Returns JSON of scanned student sessions, clusters, and email escalation status."""
-    import glob
+    if not _get_instructor(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
     students_dir = Path("data/students")
     students = []
     if students_dir.exists():
@@ -422,7 +465,10 @@ async def api_discover_fallacies(request: Request):
     """
     Triggers the Fallacy Discovery Agent for a concept markdown file.
     Payload: {"concept_id": "oop_lecture_1", "force": false, "write": true}
+    Requires instructor authentication.
     """
+    if not _get_instructor(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
     body = await request.json()
     concept_id = body.get("concept_id", "").strip()
     force = bool(body.get("force", False))

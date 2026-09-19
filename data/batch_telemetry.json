@@ -1,6 +1,21 @@
 {
-  "timestamp": "2026-09-19T16:22:28.300303+00:00",
-  "total_students_scanned": 1,
-  "cluster_count": 0,
-  "clusters": {}
+  "timestamp": "2026-09-19T22:43:50.358563+00:00",
+  "total_students_scanned": 2,
+  "cluster_count": 1,
+  "clusters": {
+    "STATIC_MEANS_CONSTANT": {
+      "fallacy_tag": "STATIC_MEANS_CONSTANT",
+      "occurrence_count": 1,
+      "affected_student_ids": [
+        "2023101002"
+      ],
+      "sample_student_quotes": [
+        "class is blue print of real world object and  object is an instance of the class \nhere new dog() creates a object for...",
+        "constructor is a special method which creates and instantiate an object for the class \nso accessing the constructor a...",
+        "static variable is fixed so this code might show some error",
+        "count changed to 5 and then to 10 in second assignment \nstatic variable is  a variable in shared memory location for ..."
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  `static int count = 0; count++;` compiles and runs. Static means shared across all instances, not immutable. `final` (Java) or `const` (C++) makes something immutable.\nKey Takeaway: `static int count = 0; count++;` compiles and runs. Static means shared across all instances, not immutable. `final` (Java) or `const` (C++) makes something immutable."
+    }
+  }
 }

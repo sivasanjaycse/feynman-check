@@ -6,6 +6,27 @@
   <title>Feynman Check — Lecture {{LECTURE_NUM}}: {{LECTURE_TITLE}}</title>
   <meta name="description" content="Socratic revision session for {{LECTURE_TITLE}}">
   <link rel="stylesheet" href="/static/style.css">
+  <!-- Syntax highlighting -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/atom-one-dark.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <style>
+    .message .hljs {
+      border-radius: 8px;
+      font-size: 0.82rem;
+      margin: 8px 0 4px;
+      padding: 12px 14px;
+      line-height: 1.5;
+      overflow-x: auto;
+    }
+    .message pre { margin: 0; }
+    .message code:not(.hljs) {
+      background: rgba(255,255,255,0.08);
+      border-radius: 4px;
+      padding: 1px 5px;
+      font-size: 0.85em;
+      font-family: 'Fira Mono', 'Consolas', monospace;
+    }
+  </style>
 </head>
 <body>
   <div class="chat-container">
@@ -85,6 +106,37 @@
 
     sendBtn.addEventListener("click", sendMessage);
 
+    function renderMarkdown(text) {
+      // Render fenced code blocks with syntax highlighting
+      const el = document.createElement("div");
+      const parts = text.split(/(```[\w]*\n[\s\S]*?```)/g);
+      parts.forEach(part => {
+        const codeMatch = part.match(/^```([\w]*)\n([\s\S]*)```$/);
+        if (codeMatch) {
+          const lang = codeMatch[1] || "plaintext";
+          const code = codeMatch[2];
+          const pre = document.createElement("pre");
+          const codeEl = document.createElement("code");
+          codeEl.className = `language-${lang}`;
+          codeEl.textContent = code;
+          pre.appendChild(codeEl);
+          hljs.highlightElement(codeEl);
+          el.appendChild(pre);
+        } else {
+          // Render **bold**, inline `code`, and line breaks
+          const span = document.createElement("span");
+          const html = part
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+            .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
+            .replace(/`([^`]+)`/g, "<code>$1</code>")
+            .replace(/\n/g, "<br>");
+          span.innerHTML = html;
+          el.appendChild(span);
+        }
+      });
+      return el;
+    }
+
     function addMessage(text, role) {
       const div = document.createElement("div");
       div.className = `message ${role}`;
@@ -92,8 +144,7 @@
       label.className = "label";
       label.textContent = role === "agent" ? "Feynman Tutor" : "You";
       div.appendChild(label);
-      const body = document.createElement("div");
-      body.textContent = text;
+      const body = renderMarkdown(text);
       div.appendChild(body);
       messagesEl.appendChild(div);
       messagesEl.scrollTop = messagesEl.scrollHeight;

@@ -1,0 +1,17 @@
+{
+  "student_id": "2023101001",
+  "concept_id": "oop_lecture_1",
+  "lecture_id": null,
+  "iteration_count": 2,
+  "initial_text": "A class is like a blueprint, while an object is an actual instance created from that blueprint.\nnew Dog() creates a new Dog object in memory. Java allocates memory for the object's instance variables, initializes them with their default values (unless a constructor gives different values), and calls the Dog constructor.",
+  "probes_issued": [
+    "Great — you clearly understand object creation well! Now consider this:\n\n```java\nDog d = new Dog();\nd.Dog();  // If this compiled, what would it do?```\nIf this were valid, would it create a new Dog or reset the existing one? What would `Dog d = d.Dog()` even assign to `d`? The language forbids calling a constructor by name on an existing reference — why do you think that is?\n",
+    "Great — you nailed the constructor concept! Now consider this:\n\n```java\nclass Counter {\n    static int count = 0;\n    void increment() { count++; }\n}\nCounter c1 = new Counter();\nCounter c2 = new Counter();\nc1.increment();\nc1.increment();\nc2.increment();\nSystem.out.println(Counter.count); // What does this print, and why?\n```\nIf static meant \"fixed,\" would this code even compile?"
+  ],
+  "student_revisions": [
+    "A constructor is used only when creating and initializing a new object. Therefore, d.Dog() is not valid in Java because Dog is a constructor, not a normal method that can be called on an existing object. If it were allowed, it would be unclear whether it should create a new object or reinitialize the existing one",
+    "It prints 3, because count is a static variable, meaning there is only one shared copy of it for all Counter objects. The first two calls through c1 increase it to 2, and the call through c2 increases the same variable to 3. The word static does not mean that the value is fixed or cannot be changed; it means that the variable belongs to the class rather than to individual objects. If we wanted a value that could not be changed, we would use final along with static."
+  ],
+  "final_verdict": "MASTERED",
+  "tagged_fallacy": null
+}
