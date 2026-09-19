@@ -481,10 +481,15 @@ def generate_probe_for_flaw(flaw_tag: Optional[str], concept_id: str = "virtual_
         return ProbeMessage(
             probe_id="probe_vm_tlb_1",
             counter_example_scenario=(
-                "Consider this scenario: The page containing your data was loaded into physical RAM "
-                "five milliseconds ago by another thread, but this specific CPU core just cleared its "
-                "TLB cache. If a TLB miss occurs right now, does the OS really need to read the physical "
-                "disk? What step happens first in memory?"
+                # FIX (2026-09-19): Explicitly state page table location after live feedback from
+                # Siva — whose revision revealed a secondary sub-misconception that the page table
+                # itself is on disk. The original probe never grounded WHERE the page table lives.
+                "The page table itself lives in physical RAM (not on disk). "
+                "Given that, consider: a page was loaded into RAM 5 ms ago, "
+                "but this CPU core just flushed its TLB cache. After a TLB miss, "
+                "does the MMU immediately go to disk — or does it walk the in-RAM "
+                "page table to find the Physical Frame Number? "
+                "What does the Valid bit in the page table entry tell you?"
             ),
             target_invariant="Invariant 1: TLB Miss vs. Page Fault (Memory vs. Disk)",
         )
