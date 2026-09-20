@@ -1,35 +1,20 @@
 {
-  "timestamp": "2026-09-19T23:46:34.008405+00:00",
+  "timestamp": "2026-09-20T04:35:00.000000+00:00",
   "total_students_scanned": 2,
-  "cluster_count": 2,
+  "cluster_count": 1,
   "clusters": {
-    "FRIEND_CLASSES_ARE_SAFE": {
-      "fallacy_tag": "FRIEND_CLASSES_ARE_SAFE",
-      "occurrence_count": 1,
+    "CLASS_IS_AN_OBJECT": {
+      "fallacy_tag": "CLASS_IS_AN_OBJECT",
+      "occurrence_count": 2,
       "affected_student_ids": [
-        "2023101001"
-      ],
-      "sample_student_quotes": [
-        "any variable declared in the class is visible to all and it can be changed directly through object which may cause un...",
-        "it does not preserve datahiding and about vulnerability B is declared as A friend because B needs to access some vari...",
-        "this code example you have given shows the vulnerability of private data exposing to public world \nso yeah you are right",
-        "member  variable of class is being changed by object here directly from public world instead of using any functions"
-      ],
-      "remediation_suggestion": "Pedagogical Intervention:\n  If you make one class a friend of another, how does that affect the principle of data hiding?\nKey Takeaway: If you make one class a friend of another, how does that affect the principle of data hiding?"
-    },
-    "STATIC_MEANS_CONSTANT": {
-      "fallacy_tag": "STATIC_MEANS_CONSTANT",
-      "occurrence_count": 1,
-      "affected_student_ids": [
+        "2023101001",
         "2023101002"
       ],
       "sample_student_quotes": [
-        "class is blue print of real world object and  object is an instance of the class \nhere new dog() creates a object for...",
-        "constructor is a special method which creates and instantiate an object for the class \nso accessing the constructor a...",
-        "static variable is fixed so this code might show some error",
-        "count changed to 5 and then to 10 in second assignment \nstatic variable is  a variable in shared memory location for ..."
+        "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+        "Writing class Dog creates an actual Dog object in RAM immediately when the code runs."
       ],
-      "remediation_suggestion": "Pedagogical Intervention:\n  `static int count = 0; count++;` compiles and runs. Static means shared across all instances, not immutable. `final` (Java) or `const` (C++) makes something immutable.\nKey Takeaway: `static int count = 0; count++;` compiles and runs. Static means shared across all instances, not immutable. `final` (Java) or `const` (C++) makes something immutable."
+      "remediation_suggestion": "Pedagogical Intervention:\n  Writing class Dog defines what a Dog looks like. No Dog exists in memory until you write new Dog(). How many Dogs exist after class Dog alone? Zero.\nKey Takeaway: A class occupies no runtime memory for instances until instantiated."
     }
   }
 }

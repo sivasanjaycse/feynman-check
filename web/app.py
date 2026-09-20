@@ -60,6 +60,14 @@ _static_dir = Path(__file__).parent / "static"
 _static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
+
+@app.middleware("http")
+async def add_cache_control_header(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
 # ---------------------------------------------------------------------------
 # Demo Students (hardcoded — this is a hackathon demo)
 # ---------------------------------------------------------------------------
@@ -199,10 +207,15 @@ def dashboard(request: Request):
     for lec in load_lectures():
         cards_html += f"""
         <a href="/chat/{lec['id']}" class="lecture-card" id="card-{lec['id']}">
-            <div class="lecture-num">Lecture {lec['num']}</div>
+            <div class="lecture-meta-row">
+                <span class="lecture-num">Lecture {lec['num']}</span>
+                <span class="badge badge-blue">OOP Core</span>
+            </div>
             <div class="lecture-title">{lec['title']}</div>
             <div class="lecture-desc">{lec['desc']}</div>
-            <div class="lecture-action">Start Revision →</div>
+            <div class="lecture-card-footer">
+                <span class="action-link">Start Revision &rarr;</span>
+            </div>
         </a>
         """
     html = html.replace("{{LECTURE_CARDS}}", cards_html)
@@ -260,7 +273,11 @@ async def chat_api(request: Request):
 
     st = load_settings()
     store = _store()
-    flow = build_chat_flow()
+    if os.environ.get("FEYNMAN_USE_STUB", "0") == "1":
+        from demo.feynman.stub import stub_complete
+        flow = build_chat_flow(call=stub_complete)
+    else:
+        flow = build_chat_flow()
 
     try:
         if not session_id:
@@ -298,28 +315,35 @@ async def chat_api(request: Request):
         latest_probe = store.latest(session_id, "probe")
         latest_verdict = store.latest(session_id, "verdict")
 
+        # Check for batch escalation if session finished
+        escalation_report = None
         if final_state == RunState.COMPLETE:
-            # Chat is done — build report
-            report = _build_session_report(store, session_id)
-            # Check for batch escalation (triggers send_email if threshold met)
             try:
-                check_and_escalate_batch()
+                escalation_report = check_and_escalate_batch()
             except Exception:
                 pass
 
+        inspector = _build_inspector_telemetry(store, session_id, final_state, escalation_report)
+
+        if final_state == RunState.COMPLETE:
+            report = _build_session_report(store, session_id)
             if latest_verdict and latest_verdict.get("verdict") == "MASTERED":
                 return JSONResponse({
-                    "response": "🎉 Great job! You've demonstrated a solid understanding of this concept. Your explanation correctly captures the core invariant!",
+                    "response": "Great job! You've demonstrated a solid understanding of this concept across multiple checkpoints.",
                     "session_id": session_id,
                     "status": "mastered",
                     "report": report,
+                    "inspector": inspector,
+                    "escalation_triggered": inspector["escalation_triggered"],
                 })
             else:
                 return JSONResponse({
-                    "response": "We've reached the end of this revision session. Check the report below to see what areas need more review.",
+                    "response": "We've reached the end of this revision session. Check the report below to see the detected concept gaps.",
                     "session_id": session_id,
                     "status": "unresolved",
                     "report": report,
+                    "inspector": inspector,
+                    "escalation_triggered": inspector["escalation_triggered"],
                 })
 
         elif final_state == RunState.FAILED:
@@ -328,27 +352,23 @@ async def chat_api(request: Request):
                 "response": f"Something went wrong: {failure.get('detail', 'Unknown error') if failure else 'Unknown error'}",
                 "session_id": session_id,
                 "status": "error",
+                "inspector": inspector,
             })
 
         else:
             # Still in progress — return the probe question
-            if latest_probe:
-                probe_text = latest_probe.get("counter_example_scenario", "")
-                return JSONResponse({
-                    "response": probe_text,
-                    "session_id": session_id,
-                    "status": "probing",
-                    "verdict_info": {
-                        "verdict": latest_verdict.get("verdict", "") if latest_verdict else "",
-                        "flaw_tag": latest_verdict.get("detected_flaw_tag", "") if latest_verdict else "",
-                    },
-                })
-            else:
-                return JSONResponse({
-                    "response": "Hmm, I need a bit more to work with. Could you elaborate on your understanding?",
-                    "session_id": session_id,
-                    "status": "probing",
-                })
+            probe_text = latest_probe.get("counter_example_scenario", "") if latest_probe else "Could you elaborate on your understanding?"
+            return JSONResponse({
+                "response": probe_text,
+                "session_id": session_id,
+                "status": "probing",
+                "verdict_info": {
+                    "verdict": latest_verdict.get("verdict", "") if latest_verdict else "",
+                    "flaw_tag": latest_verdict.get("detected_flaw_tag", "") if latest_verdict else "",
+                },
+                "inspector": inspector,
+                "escalation_triggered": inspector["escalation_triggered"],
+            })
 
     except Exception as e:
         return JSONResponse({
@@ -394,6 +414,150 @@ def _build_session_report(store: Store, session_id: str) -> Dict[str, Any]:
         "total_rounds": len(verdicts),
         "rounds": rounds,
     }
+
+
+def _build_inspector_telemetry(
+    store: Store,
+    session_id: str,
+    final_state: RunState,
+    escalation_report: Any = None,
+) -> Dict[str, Any]:
+    """Extracts real-time cognitive telemetry for the Live Agent Inspector."""
+    all_verdicts = store.history(session_id, "verdict")
+    all_probes = store.history(session_id, "probe")
+    all_submissions = store.history(session_id, "submission")
+    meta = store.meta(session_id)
+    concept_id = meta.get("concept_id", "oop_lecture_1")
+
+    latest_v = all_verdicts[-1].payload if all_verdicts else {}
+    latest_p = all_probes[-1].payload if all_probes else {}
+
+    is_back_edge = bool(latest_v and latest_v.get("verdict") in ("MISCONCEPTION", "AMBIGUOUS"))
+    mastered_count = sum(1 for v in all_verdicts if v.payload.get("verdict") == "MASTERED")
+
+    cluster_count = 0
+    cluster_tag = latest_v.get("detected_flaw_tag")
+    try:
+        t_file = ROOT / "data" / "batch_telemetry.json"
+        if t_file.exists():
+            t_data = json.loads(t_file.read_text(encoding="utf-8"))
+            clusters = t_data.get("clusters", {})
+            if cluster_tag and cluster_tag in clusters:
+                cluster_count = clusters[cluster_tag].get("occurrence_count", 0)
+            elif clusters:
+                top_k = max(clusters.keys(), key=lambda k: clusters[k].get("occurrence_count", 0))
+                cluster_tag = top_k
+                cluster_count = clusters[top_k].get("occurrence_count", 0)
+    except Exception:
+        pass
+
+    ground_truth_snippet = ""
+    try:
+        gt_file = ROOT / "data" / "concepts" / f"{concept_id}.md"
+        if gt_file.exists():
+            lines = gt_file.read_text(encoding="utf-8").splitlines()
+            snippet_lines = []
+            capture = False
+            for line in lines:
+                if "## 1. Ground Truth Invariants" in line:
+                    capture = True
+                    continue
+                if capture and line.startswith("## 2."):
+                    break
+                if capture and line.strip():
+                    snippet_lines.append(line.strip())
+                    if len(snippet_lines) >= 3:
+                        break
+            ground_truth_snippet = " ".join(snippet_lines)
+    except Exception:
+        pass
+
+    current_state_name = "COMPLETE" if final_state == RunState.COMPLETE else ("SOCRATIC_PROBE" if latest_p else "CRITIC_EVALUATE")
+
+    return {
+        "current_state": current_state_name,
+        "back_edge_triggered": is_back_edge,
+        "verdict": latest_v.get("verdict", ""),
+        "flaw_tag": latest_v.get("detected_flaw_tag"),
+        "flaw_explanation": latest_v.get("flaw_explanation"),
+        "confidence": latest_v.get("confidence", 0.0),
+        "target_invariant": latest_p.get("target_invariant") or latest_p.get("target_fallacy") or "Core Invariant",
+        "turn_count": len(all_submissions),
+        "mastered_count": mastered_count,
+        "cluster_count": cluster_count,
+        "cluster_tag": cluster_tag,
+        "escalation_triggered": bool(escalation_report or (cluster_count >= 3)),
+        "ground_truth_snippet": ground_truth_snippet,
+        "rounds": [
+            {
+                "round": idx + 1,
+                "submission": s.payload.get("text", "")[:80],
+                "verdict": all_verdicts[idx].payload.get("verdict") if idx < len(all_verdicts) else "PENDING",
+                "flaw_tag": all_verdicts[idx].payload.get("detected_flaw_tag") if idx < len(all_verdicts) else None,
+            }
+            for idx, s in enumerate(all_submissions)
+        ],
+    }
+
+
+@app.post("/api/reset-demo-cohort")
+def reset_demo_cohort():
+    """Resets the demo cohort to Alice & Bob with CLASS_IS_AN_OBJECT for the live escalation demo."""
+    students_dir = ROOT / "data" / "students"
+    students_dir.mkdir(parents=True, exist_ok=True)
+    for f in students_dir.glob("*.json"):
+        f.unlink(missing_ok=True)
+
+    # Seed Alice (2023101001)
+    (students_dir / "2023101001.json").write_text(json.dumps({
+        "student_id": "2023101001",
+        "concept_id": "oop_lecture_1",
+        "lecture_id": "oop_lecture_1",
+        "iteration_count": 1,
+        "initial_text": "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+        "probes_issued": [
+            "If declaring 'class Car' allocated memory on the heap, how much memory would be allocated before you ever instantiate it?"
+        ],
+        "student_revisions": [],
+        "final_verdict": "UNRESOLVED_ESCALATE",
+        "tagged_fallacy": "CLASS_IS_AN_OBJECT"
+    }, indent=2), encoding="utf-8")
+
+    # Seed Bob (2023101002)
+    (students_dir / "2023101002.json").write_text(json.dumps({
+        "student_id": "2023101002",
+        "concept_id": "oop_lecture_1",
+        "lecture_id": "oop_lecture_1",
+        "iteration_count": 1,
+        "initial_text": "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
+        "probes_issued": [
+            "If class Dog created an object immediately, what would new Dog() do, and how many dogs exist before writing new?"
+        ],
+        "student_revisions": [],
+        "final_verdict": "UNRESOLVED_ESCALATE",
+        "tagged_fallacy": "CLASS_IS_AN_OBJECT"
+    }, indent=2), encoding="utf-8")
+
+    # Reset telemetry
+    (ROOT / "data" / "batch_telemetry.json").write_text(json.dumps({
+        "timestamp": "2026-09-20T04:35:00.000000+00:00",
+        "total_students_scanned": 2,
+        "cluster_count": 1,
+        "clusters": {
+            "CLASS_IS_AN_OBJECT": {
+                "fallacy_tag": "CLASS_IS_AN_OBJECT",
+                "occurrence_count": 2,
+                "affected_student_ids": ["2023101001", "2023101002"],
+                "sample_student_quotes": [
+                    "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+                    "Writing class Dog creates an actual Dog object in RAM immediately when the code runs."
+                ],
+                "remediation_suggestion": "Pedagogical Intervention:\n  Writing class Dog defines what a Dog looks like. No Dog exists in memory until you write new Dog(). How many Dogs exist after class Dog alone? Zero.\nKey Takeaway: A class occupies no runtime memory for instances until instantiated."
+            }
+        }
+    }, indent=2), encoding="utf-8")
+
+    return JSONResponse({"status": "success", "message": "Demo cohort reset to 2 students with CLASS_IS_AN_OBJECT"})
 
 
 # ---------------------------------------------------------------------------

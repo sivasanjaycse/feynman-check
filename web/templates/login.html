@@ -4,276 +4,269 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Feynman Check — Login</title>
-  <meta name="description" content="Feynman Check: AI-powered Socratic revision for OOP concepts. Login as a Student or Instructor.">
-  <link rel="stylesheet" href="/static/style.css">
-  <style>
-    /* ── Role Selector ── */
-    .role-tabs {
-      display: flex;
-      gap: 0;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid var(--border-glass);
-      border-radius: 10px;
-      padding: 4px;
-      margin-bottom: 28px;
-    }
-    .role-tab {
-      flex: 1;
-      padding: 10px 0;
-      font-size: 0.88rem;
-      font-weight: 600;
-      border: none;
-      border-radius: 7px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-      background: transparent;
-      color: var(--text-muted);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      letter-spacing: 0.02em;
-    }
-    .role-tab.active-student {
-      background: var(--accent);
-      color: #fff;
-      box-shadow: 0 2px 12px var(--accent-glow);
-    }
-    .role-tab.active-instructor {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      color: #fff;
-      box-shadow: 0 2px 12px rgba(239,68,68,0.4);
-    }
-    .role-tab:hover:not(.active-student):not(.active-instructor) {
-      color: var(--text-primary);
-      background: rgba(255,255,255,0.06);
-    }
-
-    /* ── Form panels ── */
-    .form-panel {
-      display: none;
-      animation: fadeSlideIn 0.3s ease;
-    }
-    .form-panel.active {
-      display: block;
-    }
-    @keyframes fadeSlideIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-
-    /* ── Instructor badge ── */
-    .instructor-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      background: rgba(239,68,68,0.12);
-      color: #ef4444;
-      border: 1px solid rgba(239,68,68,0.3);
-      border-radius: 6px;
-      font-size: 0.7rem;
-      font-weight: 700;
-      padding: 3px 10px;
-      text-transform: uppercase;
-      letter-spacing: 0.07em;
-      margin-bottom: 18px;
-    }
-
-    /* ── Override login-card subtitle per context ── */
-    .subtitle-student { color: var(--text-muted); }
-    .subtitle-instructor { color: rgba(239,68,68,0.7); }
-
-    /* ── Demo links grid ── */
-    .demo-hint {
-      margin-top: 24px;
-      padding: 14px 16px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid var(--border-glass);
-      border-radius: 10px;
-      text-align: left;
-    }
-    .demo-hint-title {
-      font-size: 0.78rem;
-      font-weight: 600;
-      color: var(--text-muted);
-      margin-bottom: 8px;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-    }
-    .demo-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 5px;
-    }
-    .demo-link {
-      font-size: 0.82rem;
-      color: var(--accent-light);
-      text-decoration: none;
-      padding: 4px 6px;
-      border-radius: 5px;
-      transition: background 0.15s;
-    }
-    .demo-link:hover {
-      background: rgba(99,102,241,0.12);
-    }
-
-    /* ── PIN input styling ── */
-    #pin {
-      letter-spacing: 0.2em;
-    }
-  </style>
+  <title>Feynman Check — Socratic Concept Mastery</title>
+  <meta name="description" content="Feynman Check: Socratic dialogue for deep concept mastery and gap discovery.">
+  <link rel="stylesheet" href="/static/style.css?v=2.6">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("fc_theme");
+      if (saved === "light" || (!saved && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script src="/static/theme.js" defer></script>
 </head>
 
 <body>
-  <div class="login-container">
-    <div class="login-card">
+  <div class="landing-page-container">
 
-      <!-- Header -->
-      <div class="logo">🧠</div>
-      <h1>Feynman Check</h1>
-      <p class="subtitle" id="page-subtitle">Socratic Revision for OOP Concepts</p>
-
-      <!-- Role selector tabs -->
-      <div class="role-tabs" role="tablist" aria-label="Login role selection">
-        <button
-          class="role-tab active-student"
-          id="tab-student"
-          role="tab"
-          aria-selected="true"
-          aria-controls="panel-student"
-          onclick="switchRole('student')"
-        >
-          🎓 Student
-        </button>
-        <button
-          class="role-tab"
-          id="tab-instructor"
-          role="tab"
-          aria-selected="false"
-          aria-controls="panel-instructor"
-          onclick="switchRole('instructor')"
-        >
-          🔐 Instructor
+    <!-- Top Navigation Bar with Top-Right Theme Toggle Icon -->
+    <header class="landing-navbar">
+      <a href="/" class="landing-brand">
+        <div class="brand-icon">FC</div>
+        <div class="landing-brand-text">
+          <span class="title">Feynman Check</span>
+          <span class="subtitle">Socratic Dialogue &bull; Concept Mastery</span>
+        </div>
+      </a>
+      <div class="top-right-nav">
+        <button class="btn-icon theme-toggle-icon" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme" id="theme-toggle-btn">
+          <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="5"></circle>
+            <line x1="12" y1="1" x2="12" y2="3"></line>
+            <line x1="12" y1="21" x2="12" y2="23"></line>
+            <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+            <line x1="1" y1="12" x2="3" y2="12"></line>
+            <line x1="21" y1="12" x2="23" y2="12"></line>
+            <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+            <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+          </svg>
+          <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+          </svg>
         </button>
       </div>
+    </header>
 
-      <!-- ═══ STUDENT PANEL ═══ -->
-      <div class="form-panel active" id="panel-student" role="tabpanel" aria-labelledby="tab-student">
+    <!-- Main Landing Page Hero & Workspace Login Grid -->
+    <main class="landing-main-grid">
 
-        <!-- ERROR_MSG_STUDENT -->
-
-        <form method="post" action="/login" id="student-login-form">
-          <div class="form-group">
-            <label for="roll_number">Roll Number</label>
-            <input
-              type="text"
-              id="roll_number"
-              name="roll_number"
-              placeholder="e.g. 2023101001"
-              autofocus
-              required
-            >
-          </div>
-          <button type="submit" class="btn-primary" id="student-login-btn">
-            Start Revision →
-          </button>
-        </form>
-
-        <div class="demo-hint">
-          <div class="demo-hint-title">Demo Students (click to autofill)</div>
-          <div class="demo-grid">
-            <a href="#" class="demo-link" onclick="autofill('2023101001');return false;">2023101001 — Alice</a>
-            <a href="#" class="demo-link" onclick="autofill('2023101002');return false;">2023101002 — Bob</a>
-            <a href="#" class="demo-link" onclick="autofill('2023101003');return false;">2023101003 — Charlie</a>
-            <a href="#" class="demo-link" onclick="autofill('2023101004');return false;">2023101004 — Diana</a>
-            <a href="#" class="demo-link" onclick="autofill('2023101005');return false;">2023101005 — Eve</a>
-            <a href="#" class="demo-link" onclick="autofill('2023101006');return false;">2023101006 — Frank</a>
-          </div>
-        </div>
-      </div>
-
-      <!-- ═══ INSTRUCTOR PANEL ═══ -->
-      <div class="form-panel" id="panel-instructor" role="tabpanel" aria-labelledby="tab-instructor">
-
-        <div style="text-align:center; margin-bottom: 16px;">
-          <span class="instructor-badge">🔒 Restricted — Staff Only</span>
+      <!-- Left Column: Landing Hero & Value Proposition -->
+      <section class="landing-hero-col">
+        <div class="hero-pill-badge">
+          <span class="pulse-indicator"></span>
+          <span>Socratic Evaluation Engine</span>
         </div>
 
-        <!-- ERROR_MSG_INSTRUCTOR -->
+        <h1 class="landing-hero-title">
+          Master Complex Concepts Through <span class="highlight">Socratic Dialogue</span>.
+        </h1>
 
-        <form method="post" action="/instructor/login" id="instructor-login-form">
-          <div class="form-group">
-            <label for="pin">Access PIN</label>
-            <input
-              type="password"
-              id="pin"
-              name="pin"
-              placeholder="Enter instructor PIN"
-              autocomplete="current-password"
-              required
-            >
-          </div>
-          <button type="submit" class="btn-primary" id="instructor-login-btn"
-            style="background: linear-gradient(135deg, #ef4444, #dc2626); box-shadow: 0 4px 16px rgba(239,68,68,0.35);">
-            Access Dashboard →
-          </button>
-        </form>
-
-        <p style="text-align:center; margin-top:18px; font-size:0.8rem; color:var(--text-muted);">
-          Contact your system admin if you've forgotten your PIN.
+        <p class="landing-hero-lead">
+          Explain ideas in your own words. Feynman Check evaluates your reasoning, uncovers hidden fallacies, and guides you to first-principles understanding.
         </p>
-      </div>
 
-    </div>
+        <!-- Core Value Props -->
+        <div class="value-props-list">
+          <div class="value-prop-item">
+            <div class="value-prop-icon">01</div>
+            <div class="value-prop-content">
+              <h3>Active Articulation</h3>
+              <p>Express core principles in plain terms to reveal your actual mental model.</p>
+            </div>
+          </div>
+
+          <div class="value-prop-item">
+            <div class="value-prop-icon">02</div>
+            <div class="value-prop-content">
+              <h3>Targeted Counter-Probes</h3>
+              <p>Receive precise counter-scenarios that challenge faulty assumptions and logical gaps.</p>
+            </div>
+          </div>
+
+          <div class="value-prop-item">
+            <div class="value-prop-icon">03</div>
+            <div class="value-prop-content">
+              <h3>Verified Mastery</h3>
+              <p>Demonstrate consistent, robust invariant understanding before advancing.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Right Column: Integrated Login Card -->
+      <section class="landing-login-col">
+        <div class="login-card">
+
+          <!-- Card Header / Subtitle -->
+          <div class="brand-header">
+            <div class="brand-icon">FC</div>
+            <div class="brand-title">
+              <h2 style="font-size: 1.15rem; margin: 0; font-weight: 700;">Workspace Access</h2>
+              <p id="page-subtitle" style="margin: 2px 0 0 0;">Select role to initiate Socratic session</p>
+            </div>
+          </div>
+
+          <!-- Role Selector Tabs -->
+          <div class="role-tabs" role="tablist" aria-label="Login role selection">
+            <button
+              class="role-tab active-student"
+              id="tab-student"
+              role="tab"
+              aria-selected="true"
+              aria-controls="panel-student"
+              onclick="switchRole('student')"
+            >
+              Student Revision
+            </button>
+            <button
+              class="role-tab"
+              id="tab-instructor"
+              role="tab"
+              aria-selected="false"
+              aria-controls="panel-instructor"
+              onclick="switchRole('instructor')"
+            >
+              Faculty Portal
+            </button>
+          </div>
+
+          <!-- Student Panel -->
+          <div class="form-panel active" id="panel-student" role="tabpanel" aria-labelledby="tab-student">
+            <!-- ERROR_MSG_STUDENT -->
+
+            <form method="post" action="/login" id="student-login-form">
+              <div class="form-group">
+                <label for="roll_number">University Roll Number</label>
+                <input
+                  type="text"
+                  id="roll_number"
+                  name="roll_number"
+                  placeholder="e.g. 2023101001"
+                  autofocus
+                  required
+                >
+              </div>
+              <button type="submit" class="btn-primary" style="width: 100%;" id="student-login-btn">
+                Enter Revision Workspace &rarr;
+              </button>
+            </form>
+
+            <div class="demo-roster-box">
+              <div class="demo-roster-header">
+                <span class="demo-roster-title">Demo Cohort (Click to Auto-fill)</span>
+              </div>
+              <div class="demo-roster-grid">
+                <a href="#" class="demo-chip" onclick="autofill('2023101001');return false;">
+                  <span class="demo-chip-name">Alice</span>
+                  <span class="demo-chip-roll">2023101001</span>
+                </a>
+                <a href="#" class="demo-chip" onclick="autofill('2023101002');return false;">
+                  <span class="demo-chip-name">Bob</span>
+                  <span class="demo-chip-roll">2023101002</span>
+                </a>
+                <a href="#" class="demo-chip" onclick="autofill('2023101003');return false;">
+                  <span class="demo-chip-name">Charlie</span>
+                  <span class="demo-chip-roll">2023101003</span>
+                </a>
+                <a href="#" class="demo-chip" onclick="autofill('2023101004');return false;">
+                  <span class="demo-chip-name">Diana</span>
+                  <span class="demo-chip-roll">2023101004</span>
+                </a>
+                <a href="#" class="demo-chip" onclick="autofill('2023101005');return false;">
+                  <span class="demo-chip-name">Eve</span>
+                  <span class="demo-chip-roll">2023101005</span>
+                </a>
+                <a href="#" class="demo-chip" onclick="autofill('2023101006');return false;">
+                  <span class="demo-chip-name">Frank</span>
+                  <span class="demo-chip-roll">2023101006</span>
+                </a>
+              </div>
+              <div class="demo-reset-action">
+                <button type="button" class="btn-text-subtle" onclick="resetCohort()">
+                  &bull; Reset Cohort to Pre-seeded State (Alice &amp; Bob)
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Faculty / Instructor Panel -->
+          <div class="form-panel" id="panel-instructor" role="tabpanel" aria-labelledby="tab-instructor">
+            <div style="margin-bottom: 1rem;">
+              <span class="badge badge-red">Course Staff Only</span>
+            </div>
+
+            <!-- ERROR_MSG_INSTRUCTOR -->
+
+            <form method="post" action="/instructor/login" id="instructor-login-form">
+              <div class="form-group">
+                <label for="pin">Instructor Security PIN</label>
+                <input
+                  type="password"
+                  id="pin"
+                  name="pin"
+                  placeholder="Enter PIN (demo: feynman2024)"
+                  autocomplete="current-password"
+                  required
+                >
+              </div>
+              <button type="submit" class="btn-primary" style="width: 100%; background: #dc2626;" id="instructor-login-btn">
+                Access Faculty Telemetry &rarr;
+              </button>
+            </form>
+
+            <p style="margin-top: 1.2rem; font-size: 0.78rem; color: var(--text-muted); text-align: center;">
+              Default demo PIN is configured as <code style="color:var(--text-secondary)">feynman2024</code>.
+            </p>
+          </div>
+
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Clean Engineering Footer -->
+    <footer class="landing-footer">
+      <div>
+        <span>Feynman Check &bull; Socratic Concept Mastery</span>
+      </div>
+      <div>
+        <span>Learn by explaining. Master through inquiry.</span>
+      </div>
+    </footer>
+
   </div>
 
   <script>
-    // ── Role switcher ──
     function switchRole(role) {
-      const panels   = { student: 'panel-student',    instructor: 'panel-instructor' };
-      const tabs     = { student: 'tab-student',      instructor: 'tab-instructor' };
-      const subtitles = {
-        student:    'Socratic Revision for OOP Concepts',
-        instructor: 'Monitoring & Analytics Dashboard'
-      };
-      const activeClass = { student: 'active-student', instructor: 'active-instructor' };
+      const isStudent = role === 'student';
+      document.getElementById('panel-student').classList.toggle('active', isStudent);
+      document.getElementById('panel-instructor').classList.toggle('active', !isStudent);
+      document.getElementById('tab-student').classList.toggle('active-student', isStudent);
+      document.getElementById('tab-instructor').classList.toggle('active-instructor', !isStudent);
 
-      // Panels
-      document.getElementById('panel-student').classList.remove('active');
-      document.getElementById('panel-instructor').classList.remove('active');
-      document.getElementById(panels[role]).classList.add('active');
-
-      // Tabs
-      const tabStudent    = document.getElementById('tab-student');
-      const tabInstructor = document.getElementById('tab-instructor');
-      tabStudent.classList.remove('active-student', 'active-instructor');
-      tabInstructor.classList.remove('active-student', 'active-instructor');
-      tabStudent.setAttribute('aria-selected', role === 'student' ? 'true' : 'false');
-      tabInstructor.setAttribute('aria-selected', role === 'instructor' ? 'true' : 'false');
-      document.getElementById(tabs[role]).classList.add(activeClass[role]);
-
-      // Subtitle
-      document.getElementById('page-subtitle').textContent = subtitles[role];
-
-      // Focus the first input of the active panel
-      const activePanel = document.getElementById(panels[role]);
-      const firstInput = activePanel.querySelector('input');
-      if (firstInput) setTimeout(() => firstInput.focus(), 50);
+      const targetInput = isStudent ? document.getElementById('roll_number') : document.getElementById('pin');
+      if (targetInput) targetInput.focus();
     }
 
-    // ── Demo student autofill ──
     function autofill(roll) {
-      document.getElementById('roll_number').value = roll;
-      document.getElementById('student-login-btn').focus();
+      const input = document.getElementById('roll_number');
+      input.value = roll;
+      input.focus();
     }
 
-    // ── If page loaded with an instructor error, switch to instructor tab automatically ──
-    window.addEventListener('DOMContentLoaded', () => {
-      const hasInstructorError = document.querySelector('#panel-instructor .error');
-      if (hasInstructorError) switchRole('instructor');
-    });
+    async function resetCohort() {
+      if (!confirm("Reset cohort telemetry to initial state (Alice & Bob pre-seeded)?")) return;
+      try {
+        const resp = await fetch("/api/reset-demo-cohort", { method: "POST" });
+        const data = await resp.json();
+        alert(data.message || "Cohort reset successfully!");
+      } catch (err) {
+        alert("Reset failed: " + err.message);
+      }
+    }
   </script>
 </body>
-
 </html>

@@ -212,44 +212,32 @@ def build_probe_messages(
         user_sections.append(
             f"### STUDENT QUERY ABOUT DIALOGUE / META-QUESTION:\n\"{student_text}\"\n\n"
             "The student is asking a question about the conversation history or previous questions.\n"
-            "Rules for your response (Rule 6):\n"
             "1. In your first sentence, answer their query directly and accurately based on the FULL CONVERSATION TRANSCRIPT above.\n"
-            "   (For example, if they asked what the first question was, quote or state the opening question).\n"
             "2. Then invite them to answer that question: 'Now, how would you explain that in your own words?'\n"
-            "3. Keep the total response under 60 words. Return a structured ProbeMessage."
+            "3. Keep the total response under 35 words. Return a structured ProbeMessage."
         )
     elif is_mastered_transition and upcoming_fallacy_info:
         tag = upcoming_fallacy_info.get("tag") or target_fallacy or "NEXT_CONCEPT"
         title = upcoming_fallacy_info.get("title", tag)
         desc = upcoming_fallacy_info.get("derailment", "")
-        counter = upcoming_fallacy_info.get("pedagogical_counter", "")
         example_claim = upcoming_fallacy_info.get("example_claim", "")
 
         user_sections.append(
             f"### PREVIOUS STUDENT ANSWER (CORRECT):\n\"{student_text}\"\n\n"
-            f"The student demonstrated solid understanding on the previous topic!\n"
-            f"Now, progress the revision to the UPCOMING FALLACY from this lecture:\n"
-            f"- Target Fallacy to test: `{tag}` ({title})\n"
-            f"- Fallacy description: {desc}\n"
-            f"- Example flawed student belief: \"{example_claim}\"\n"
-            f"- Pedagogical counter context: \"{counter}\"\n\n"
+            f"The student demonstrated understanding on the previous topic.\n"
+            f"Now, test the UPCOMING FALLACY from this lecture: `{tag}` ({title})\n"
+            f"- Flawed belief: \"{example_claim}\"\n\n"
             "Rules for your response:\n"
-            "1. In your first sentence, briefly acknowledge and praise their previous correct answer.\n"
-            f"2. Then present a realistic programming scenario or question that directly tests whether the student holds the `{tag}` misconception.\n"
-            "3. Do NOT give away the invariant or explain the answer.\n"
-            f"4. Keep the entire response under 70 words. Return a structured ProbeMessage with target_invariant set to '{tag}'."
+            "1. Praise their correct answer in ONE brief phrase (e.g., 'Spot on!').\n"
+            f"2. Ask ONE direct diagnostic question testing the `{tag}` invariant.\n"
+            "3. Keep the total response strictly under 35 words (1-2 sentences). Return a structured ProbeMessage with target_invariant set to '{tag}'."
         )
     elif is_mastered_transition:
         user_sections.append(
             f"### PREVIOUS STUDENT ANSWER (CORRECT):\n\"{student_text}\"\n\n"
-            "The student answered the previous question correctly! "
-            "Now, test them on ANOTHER common fallacy or invariant from the GROUND TRUTH section above "
-            "that has NOT been tested yet.\n"
-            "Rules:\n"
-            "1. Briefly acknowledge their correct answer in ONE short sentence.\n"
-            "2. Select a DIFFERENT common fallacy from the GROUND TRUTH section.\n"
-            "3. Ask ONE clear diagnostic question that tests whether the student holds that misconception.\n"
-            "4. Keep the total response under 70 words. Return a structured ProbeMessage."
+            "The student answered correctly. Briefly praise in 1 phrase, then ask ONE short diagnostic question "
+            "testing another invariant from GROUND TRUTH.\n"
+            "Keep the entire response strictly under 35 words (1-2 sentences). Return a structured ProbeMessage."
         )
     else:
         user_sections.extend([
@@ -258,11 +246,9 @@ def build_probe_messages(
             f"- Flaw Tag: {verdict.get('detected_flaw_tag')}\n"
             f"- Flaw Explanation: {verdict.get('flaw_explanation')}\n"
             f"- Confidence: {verdict.get('confidence')}",
-            "Follow the 3-step Socratic rhythm:\n"
-            "1. ACKNOWLEDGE (Opening sentence): Reflectively acknowledge the student's thought or intuitive effort (e.g. 'I see where you are coming from...', 'Fair point on how classes define methods...'). Do not confirm it as technically correct, and do not say 'Actually, you are wrong'.\n"
-            "2. PIVOT (Middle sentence): Introduce a concrete programming scenario or tension where this assumption leads to an unexpected or contradictory result.\n"
-            "3. CHALLENGE (Closing sentence): Conclude with ONE focused diagnostic question inviting them to resolve the contradiction.\n"
-            "Keep the entire response between 45 and 80 words. Return a structured ProbeMessage."
+            "Generate a concise Socratic counter-probe:\n"
+            "1. Pose ONE concrete contradictory scenario or paradox challenging their claim without revealing the answer.\n"
+            "2. Keep the entire response strictly under 35 words (1-2 sentences). Return a structured ProbeMessage."
         ])
 
     return [
@@ -701,8 +687,17 @@ def build_chat_flow(call: Callable = complete) -> SimpleNamespace:
 
         # Case 1: Student answer was MASTERED
         if verdict.verdict == "MASTERED":
-            # If there are still upcoming fallacies to test and we haven't reached session bound:
-            if upcoming_fallacies and len(all_verdicts) < MAX_CHAT_REVISIONS:
+            # Count total MASTERED evaluations in this session
+            all_verdicts = [v.payload for v in ctx.history("verdict")]
+            mastered_count = sum(1 for v in all_verdicts if v.get("verdict") == "MASTERED")
+
+            # Terminate with MASTERED after answering at least two questions correctly, or if no upcoming fallacies remain
+            if mastered_count >= 2 or not upcoming_fallacies:
+                log_student_session_state(ctx, final_verdict="MASTERED")
+                return COMPLETE
+
+            # If only 1 question mastered so far and more fallacies exist: advance to next question
+            if len(all_verdicts) < MAX_CHAT_REVISIONS:
                 return SOCRATIC_PROBE
             else:
                 log_student_session_state(ctx, final_verdict="MASTERED")
