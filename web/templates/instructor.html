@@ -4,10 +4,10 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Feynman Check — Instructor Dashboard & Alert Monitor</title>
+  <title>Feynman Check — Faculty Telemetry &amp; Invariant Pipeline</title>
   <meta name="description"
-    content="Instructor gap detection monitor, telemetry clusters, and automated email escalation status">
-  <link rel="stylesheet" href="/static/style.css?v=2.3">
+    content="Instructor gap detection monitor, telemetry clusters, and automated concept invariant compiler.">
+  <link rel="stylesheet" href="/static/style.css?v=2.4">
   <script>
     (function() {
       const saved = localStorage.getItem("fc_theme");
@@ -17,178 +17,44 @@
     })();
   </script>
   <script src="/static/theme.js" defer></script>
-  <style>
-    .instructor-container {
-      max-width: 1000px;
-      margin: 0 auto;
-      padding: 30px 20px;
-    }
-
-    .top-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 24px;
-      border-bottom: 1px solid var(--border-color);
-      padding-bottom: 16px;
-    }
-
-    .stats-row {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 16px;
-      margin-bottom: 24px;
-    }
-
-    .stat-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 18px;
-    }
-
-    .stat-num {
-      font-size: 2rem;
-      font-weight: 700;
-      color: var(--accent);
-    }
-
-    .stat-label {
-      font-size: 0.85rem;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
-
-    .cluster-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 16px;
-    }
-
-    .cluster-card.triggered {
-      border-color: #ef4444;
-      background: rgba(239, 68, 68, 0.05);
-    }
-
-    .cluster-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-
-    .badge-triggered {
-      background: #ef4444;
-      color: white;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .badge-monitoring {
-      background: #f59e0b;
-      color: black;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 0.75rem;
-      font-weight: 700;
-    }
-
-    .progress-bar-bg {
-      background: rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      height: 10px;
-      overflow: hidden;
-      margin: 10px 0;
-    }
-
-    .progress-bar-fill {
-      height: 100%;
-      background: var(--accent);
-      transition: width 0.3s ease;
-    }
-
-    .progress-bar-fill.danger {
-      background: #ef4444;
-    }
-
-    .email-box {
-      background: #111827;
-      border: 1px dashed #f59e0b;
-      border-radius: 8px;
-      padding: 14px;
-      font-family: monospace;
-      font-size: 0.85rem;
-      margin-top: 14px;
-      white-space: pre-wrap;
-      color: #fde68a;
-    }
-
-    .student-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-    }
-
-    .student-table th,
-    .student-table td {
-      padding: 10px 14px;
-      text-align: left;
-      border-bottom: 1px solid var(--border-color);
-      font-size: 0.9rem;
-    }
-
-    .student-table th {
-      color: var(--text-muted);
-      font-size: 0.8rem;
-      text-transform: uppercase;
-    }
-
-    .dropzone-box {
-      border: 2px dashed rgba(99, 102, 241, 0.4);
-      border-radius: 10px;
-      padding: 22px;
-      text-align: center;
-      cursor: pointer;
-      background: rgba(99, 102, 241, 0.03);
-      transition: all 0.2s ease;
-    }
-    .dropzone-box:hover, .dropzone-box.drag-over {
-      border-color: var(--accent);
-      background: rgba(99, 102, 241, 0.1);
-    }
-    @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
-    }
-  </style>
 </head>
 
 <body>
   <div class="instructor-container">
-    <div class="top-bar">
-      <div>
-        <h1>👨‍🏫 Instructor Monitor</h1>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">
-          Real-time Misconception Clusters & Email Escalation Trigger
-        </p>
+
+    <!-- Top Navigation Bar -->
+    <header class="instructor-navbar">
+      <div class="instructor-brand-area">
+        <div class="nav-breadcrumbs" style="margin-bottom: 2px;">
+          <span>CS3301 OOAD</span>
+          <span>/</span>
+          <strong>Faculty Workspace</strong>
+        </div>
+        <div class="instructor-brand-title">
+          <h1>Course Telemetry &amp; Curriculum Pipeline</h1>
+          <span class="live-indicator-pill">
+            <span class="live-dot"></span>
+            Live Stream
+          </span>
+        </div>
+        <div class="instructor-subtitle">
+          Real-time student diagnostic clusters, automated escalation triggers, and concept invariant compiler.
+        </div>
       </div>
-      <div style="display: flex; align-items: center;">
-        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme" style="margin-right: 8px;">
+      <div class="instructor-nav-actions">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme">
           <span class="theme-icon">☀️</span>
           <span class="theme-toggle-text">Light</span>
         </button>
-        <a href="/instructor/logout" class="btn-secondary" style="margin-right: 8px;">Logout</a>
-        <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄
-          Refresh</button>
+        <button onclick="loadData()" class="btn-secondary" id="refresh-telemetry-btn" title="Refresh Live Cohort Data">
+          Refresh Telemetry
+        </button>
+        <a href="/instructor/logout" class="btn-secondary">Log Out</a>
       </div>
-    </div>
+    </header>
 
-    <!-- Overview Stats -->
-    <div class="stats-row">
+    <!-- Overview Stats Metric Strip -->
+    <section class="stats-grid">
       <div class="stat-card">
         <div class="stat-num" id="total-students">0 / 6</div>
         <div class="stat-label">Students Completed Revision</div>
@@ -198,146 +64,175 @@
         <div class="stat-label">Active Misconception Clusters</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" style="color: #f59e0b;">$\ge 3$</div>
-        <div class="stat-label">Alert Escalation Threshold</div>
+        <div class="stat-num" style="color: var(--warning);">N &ge; 3</div>
+        <div class="stat-label">Escalation Threshold</div>
       </div>
       <div class="stat-card">
-        <div class="stat-num" id="emails-triggered" style="color: #10b981;">0</div>
-        <div class="stat-label">Emails Dispatched</div>
+        <div class="stat-num" id="emails-triggered" style="color: var(--success);">0</div>
+        <div class="stat-label">Automated Alerts Dispatched</div>
       </div>
-    </div>
+    </section>
 
-    <!-- Upload New Lecture Card (PDF / PPTX) -->
-    <div class="stat-card" style="margin-bottom: 24px; padding: 22px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
-      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
-        <div>
-          <h2 style="font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
-            <span>📤</span> Upload New Lecture (PDF / PPTX)
-          </h2>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0 0 0;">
-            Upload lecture notes or slide deck. The agent extracts content, synthesizes ground-truth invariants, runs the Fallacy Discovery Agent, and publishes a new revision clipboard to the student dashboard.
+    <!-- Curriculum Ingestion Pipeline Card (Upload Concepts) -->
+    <section class="panel-card" id="upload-panel">
+      <div class="panel-header">
+        <div class="panel-title-area">
+          <h2>Curriculum Ingestion Pipeline</h2>
+          <p>
+            Upload lecture slide decks or comprehensive notes. The ingestion engine extracts slide hierarchies, compiles ground-truth invariants, executes the Fallacy Discovery Engine, and registers the module to the student revision catalog.
           </p>
         </div>
-        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-light); border: 1px solid var(--accent); font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AUTO-INGEST</span>
+        <span class="badge badge-blue">Invariant Compiler</span>
       </div>
 
-      <form id="lecture-upload-form" onsubmit="event.preventDefault(); submitLectureUpload();" style="display: flex; flex-direction: column; gap: 14px;">
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
-          <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE TITLE *</label>
-            <input type="text" id="upload-title" placeholder="e.g., Binary Search Trees & AVL Trees" required
-              style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+      <form id="lecture-upload-form" onsubmit="event.preventDefault(); submitLectureUpload();">
+        <div class="form-row">
+          <div class="form-field">
+            <label for="upload-title">Lecture Title *</label>
+            <input type="text" id="upload-title" class="form-input" placeholder="e.g. Binary Search Trees &amp; AVL Trees" required>
           </div>
-          <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">SHORT DESCRIPTION</label>
-            <input type="text" id="upload-desc" placeholder="e.g., BST invariants, rotation mechanisms, balance factor"
-              style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+          <div class="form-field">
+            <label for="upload-desc">Target Topics &amp; Invariants</label>
+            <input type="text" id="upload-desc" class="form-input" placeholder="e.g. BST ordering invariants, tree rotations, balance factors">
           </div>
         </div>
 
-        <div>
-          <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE FILE (.pdf or .pptx) *</label>
-          <div id="dropzone" class="dropzone-box" onclick="document.getElementById('upload-file').click();">
-            <input type="file" id="upload-file" accept=".pdf,.pptx" style="display: none;" onchange="handleFileSelected(this)">
+        <div class="form-field" style="margin-bottom: 14px;">
+          <label>Lecture Slide Deck or Notes (.pdf / .pptx) *</label>
+          <div id="dropzone" class="dropzone-area" onclick="document.getElementById('upload-file').click();">
+            <input type="file" id="upload-file" accept=".pdf,.pptx,.ppt" style="display: none;" onchange="handleFileSelected(this)">
+            
             <div id="dropzone-prompt">
-              <div style="font-size: 2rem; margin-bottom: 6px;">📑</div>
-              <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 600;">Click to browse or drag & drop lecture file here</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports PDF (.pdf) or PowerPoint (.pptx) slide decks</div>
+              <svg class="dropzone-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <div class="dropzone-primary-text">Drag &amp; drop lecture slide deck here, or click to browse</div>
+              <div class="dropzone-secondary-text">Supported formats for invariant compilation:</div>
+              <div class="file-format-pills">
+                <span class="file-format-pill">PDF Document (.pdf)</span>
+                <span class="file-format-pill">PowerPoint Presentation (.pptx)</span>
+                <span class="file-format-pill">Max 50 MB</span>
+              </div>
             </div>
-            <div id="file-info" style="display: none; font-size: 0.95rem; color: var(--accent-light); font-weight: 600;"></div>
+
+            <div id="file-info" class="file-selected-card">
+              <div class="file-selected-left">
+                <svg style="width:20px;height:20px;color:var(--accent);flex-shrink:0;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                <div>
+                  <span class="file-selected-name" id="file-selected-name">lecture.pdf</span>
+                  <span class="file-selected-size" id="file-selected-size">(0.00 MB)</span>
+                </div>
+              </div>
+              <button type="button" class="file-change-action" onclick="event.stopPropagation(); clearFile();">
+                Replace File
+              </button>
+            </div>
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
-            <input type="checkbox" id="upload-run-discovery" checked style="accent-color: var(--accent); width: 16px; height: 16px;">
-            <span>Run <strong>Fallacy Discovery Agent</strong> during upload to create Section 2 & Section 5</span>
+        <div class="form-actions-row">
+          <label class="checkbox-label">
+            <input type="checkbox" id="upload-run-discovery" checked>
+            <span>Synthesize Section 2 invariants and execute <strong>Fallacy Discovery Engine</strong> during ingestion</span>
           </label>
-          <button type="submit" id="upload-btn" class="btn-primary" style="padding: 10px 22px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
-            <span>⚡</span> Ingest & Publish Lecture
+          <button type="submit" id="upload-btn" class="btn-primary">
+            Compile &amp; Publish Lecture &rarr;
           </button>
         </div>
       </form>
 
-      <!-- Progress / Loading Status -->
-      <div id="upload-progress-box" style="display: none; margin-top: 18px; padding: 14px 18px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.35);">
+      <!-- Loading / Progress Notification -->
+      <div id="upload-progress-box" class="status-box loading">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 22px; height: 22px; border: 3px solid rgba(99, 102, 241, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;"></div>
-          <span id="upload-progress-text" style="font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
-            Extracting slides/pages and synthesizing invariants with Fallacy Discovery Agent...
+          <div class="loading-spinner"></div>
+          <span id="upload-progress-text" style="font-weight: 500;">
+            Extracting slides and synthesizing pedagogical invariants with Fallacy Discovery Agent...
           </span>
         </div>
       </div>
 
       <!-- Result View -->
-      <div id="upload-result-box" style="display: none; margin-top: 18px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);"></div>
-    </div>
+      <div id="upload-result-box" class="status-box success"></div>
+    </section>
 
-    <!-- Fallacy Discovery Agent Card -->
-    <div class="stat-card" style="margin-bottom: 24px; padding: 20px;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <div>
-          <h2 style="font-size: 1.15rem; margin: 0;">🧠 Fallacy Discovery Agent</h2>
-          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">
-            Extracts common misconceptions, flawed student claims, and pedagogical counters directly from lecture
-            concept notes.
+    <!-- Fallacy Discovery & Synthesis Card -->
+    <section class="panel-card" id="discovery-panel">
+      <div class="panel-header">
+        <div class="panel-title-area">
+          <h2>Fallacy Discovery &amp; Diagnostic Synthesis</h2>
+          <p>
+            Evaluates concept ground truth against student mental model heuristics. Synthesizes quotable flawed statements, diagnostic opening probes, and pedagogical counter-examples.
           </p>
         </div>
-        <span class="badge"
-          style="background: var(--accent); color: black; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AGENT</span>
+        <span class="badge badge-amber">Diagnostic Engine</span>
       </div>
-      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <select id="discover-lecture-select"
-          style="padding: 8px 12px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
-          <option value="oop_lecture_1">Lecture 1: Classes & Objects</option>
-          <option value="oop_lecture_2">Lecture 2: Encapsulation & Access Modifiers</option>
-          <option value="oop_lecture_3">Lecture 3: Inheritance — IS-A vs HAS-A</option>
-          <option value="oop_lecture_4">Lecture 4: Polymorphism</option>
-          <option value="oop_lecture_5">Lecture 5: Abstract Classes & Interfaces</option>
-          <option value="oop_lecture_6">Lecture 6: Exception Handling</option>
-          <option value="oop_lecture_7">Lecture 7: SOLID Principles</option>
-        </select>
-        <label
-          style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
-          <input type="checkbox" id="discover-force-checkbox"> Re-synthesize (Force)
+
+      <div style="display: flex; gap: 12px; align-items: center; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 260px;">
+          <select id="discover-lecture-select" class="form-select">
+            <option value="oop_lecture_1">Lecture 1: Classes &amp; Objects</option>
+            <option value="oop_lecture_2">Lecture 2: Encapsulation &amp; Access Modifiers</option>
+            <option value="oop_lecture_3">Lecture 3: Inheritance — IS-A vs HAS-A</option>
+            <option value="oop_lecture_4">Lecture 4: Polymorphism</option>
+            <option value="oop_lecture_5">Lecture 5: Abstract Classes &amp; Interfaces</option>
+            <option value="oop_lecture_6">Lecture 6: Exception Handling</option>
+            <option value="oop_lecture_7">Lecture 7: SOLID Principles</option>
+          </select>
+        </div>
+        <label class="checkbox-label" style="margin-right: 4px;">
+          <input type="checkbox" id="discover-force-checkbox">
+          <span>Force Re-Synthesis</span>
         </label>
-        <button id="run-discover-btn" onclick="triggerFallacyDiscovery()" class="btn-primary"
-          style="padding: 8px 16px; font-size: 0.85rem;">Run Discovery</button>
+        <button id="run-discover-btn" onclick="triggerFallacyDiscovery()" class="btn-primary">
+          Run Diagnostic Synthesis &rarr;
+        </button>
       </div>
-      <div id="discover-result"
-        style="display: none; margin-top: 16px; padding: 14px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
-      </div>
-    </div>
 
-    <!-- Active Clusters -->
-    <h2 style="margin-bottom: 16px; font-size: 1.25rem;">📊 Fallacy Clusters (Cohort Telemetry)</h2>
+      <div id="discover-result" class="status-box" style="margin-top: 16px;"></div>
+    </section>
+
+    <!-- Cohort Misconception Clusters -->
+    <div class="section-heading-row">
+      <h2>Cohort Misconception Clusters</h2>
+      <span>Escalation Rule: Triggered at N &ge; 3</span>
+    </div>
     <div id="clusters-container">
-      <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
-        No misconceptions clustered yet. When students complete revisions with common flaws, they will cluster here.
+      <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 32px;">
+        No student misconception clusters detected. Telemetry aggregates automatically when shared fallacies are surfaced.
       </div>
     </div>
 
-    <!-- Completed Student Sessions -->
-    <h2 style="margin: 32px 0 16px 0; font-size: 1.25rem;">👥 Completed Student Sessions</h2>
-    <div class="cluster-card" style="padding: 0; overflow-x: auto;">
+    <!-- Completed Student Sessions Table -->
+    <div class="section-heading-row" style="margin-top: 2.5rem;">
+      <h2>Student Diagnostic Audit Trail</h2>
+      <span>Individual Revision Outcomes</span>
+    </div>
+    <div class="table-card">
       <table class="student-table">
         <thead>
           <tr>
             <th>Roll Number</th>
-            <th>Lecture</th>
-            <th>Final Verdict</th>
-            <th>Tagged Fallacy</th>
-            <th>Rounds</th>
+            <th>Lecture Concept</th>
+            <th>Final Classification</th>
+            <th>Identified Fallacy</th>
+            <th>Socratic Rounds</th>
           </tr>
         </thead>
         <tbody id="student-rows">
           <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records
-              saved yet.</td>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">
+              Loading student diagnostic records...
+            </td>
           </tr>
         </tbody>
       </table>
     </div>
+
   </div>
 
   <script>
@@ -346,7 +241,7 @@
         const res = await fetch('/api/instructor');
         const data = await res.json();
 
-        // Update stats
+        // Update KPI metrics
         document.getElementById('total-students').textContent = `${data.total_students} / 6`;
         document.getElementById('active-clusters').textContent = data.cluster_count;
         document.getElementById('emails-triggered').textContent = data.alerts_count;
@@ -365,16 +260,14 @@
             card.innerHTML = `
               <div class="cluster-header">
                 <div>
-                  <h3 style="margin: 0; font-size: 1.1rem; color: ${isTriggered ? '#ef4444' : 'var(--text-primary)'};">
-                    ${isTriggered ? '🚨' : '⚠️'} ${tag}
-                  </h3>
-                  <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 4px;">
-                    Affected Students: <strong>${c.affected_student_ids.join(', ')}</strong> (${count} / ${data.threshold} threshold)
+                  <div class="cluster-title">${tag}</div>
+                  <div class="cluster-subinfo">
+                    Affected Roll Numbers: <strong>${c.affected_student_ids.join(', ')}</strong> &bull; ${count} / ${data.threshold} Threshold
                   </div>
                 </div>
                 <div>
-                  <span class="${isTriggered ? 'badge-triggered' : 'badge-monitoring'}">
-                    ${isTriggered ? 'EMAIL DISPATCHED' : 'MONITORING'}
+                  <span class="badge ${isTriggered ? 'badge-red' : 'badge-amber'}">
+                    ${isTriggered ? 'THRESHOLD REACHED (3/3) • EMAIL DISPATCHED' : `MONITORING (${count}/3)`}
                   </span>
                 </div>
               </div>
@@ -383,19 +276,24 @@
                 <div class="progress-bar-fill ${isTriggered ? 'danger' : ''}" style="width: ${pct}%;"></div>
               </div>
 
-              <div style="font-size: 0.85rem; margin-top: 8px;">
-                <strong>Suggested Remediation:</strong> ${c.remediation_suggestion}
+              <div class="cluster-remediation">
+                <strong>Prescribed Remediation:</strong> ${c.remediation_suggestion}
               </div>
 
               ${isTriggered ? `
-                <div class="email-box">
-📧 <strong>AUTOMATED EMAIL DISPATCHED TO: professor@university.edu</strong>
-📋 <strong>SUBJECT:</strong> [CONCEPT GAP ALERT] ${tag} — ${count} students affected
---------------------------------------------------------------------------------
-Dear Professor,
-Our Feynman Check system has detected a recurring misconception across ${count} students.
-Affected: ${c.affected_student_ids.join(', ')}
-Key Remediation: ${c.remediation_suggestion}
+                <div class="email-memorandum">
+<strong>[AUTOMATED ESCALATION MEMORANDUM • DISPATCHED]</strong>
+To: course-staff@university.edu
+Subject: [FACULTY ALERT] Shared Concept Gap Detected — ${tag} (${count} Students Affected)
+Date: ${new Date().toISOString().split('T')[0]}
+
+Dear Course Staff,
+A recurring cognitive fallacy has crossed the threshold (${count} students exhibiting the same invariant violation).
+
+Target Invariant: ${tag}
+Affected Cohort: ${c.affected_student_ids.join(', ')}
+Prescribed Pedagogical Counter:
+${c.remediation_suggestion}
                 </div>
               ` : ''}
             `;
@@ -403,8 +301,8 @@ Key Remediation: ${c.remediation_suggestion}
           }
         } else {
           cContainer.innerHTML = `
-            <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 30px;">
-              No misconceptions clustered yet. When students complete revisions with common flaws, they will cluster here.
+            <div class="cluster-card" style="text-align: center; color: var(--text-muted); padding: 32px;">
+              No student misconception clusters detected. Telemetry aggregates automatically when shared fallacies are surfaced.
             </div>
           `;
         }
@@ -415,16 +313,17 @@ Key Remediation: ${c.remediation_suggestion}
           sBody.innerHTML = '';
           for (const s of data.students) {
             const tr = document.createElement('tr');
+            const isMastered = s.final_verdict === 'MASTERED';
             tr.innerHTML = `
-              <td><strong>${s.student_id}</strong></td>
-              <td>${s.concept_id}</td>
+              <td><strong style="font-family: var(--font-mono);">${s.student_id}</strong></td>
+              <td><code>${s.concept_id}</code></td>
               <td>
-                <span class="badge ${s.final_verdict === 'MASTERED' ? 'badge-mastered' : 'badge-unresolved'}">
+                <span class="badge ${isMastered ? 'badge-green' : 'badge-red'}">
                   ${s.final_verdict}
                 </span>
               </td>
               <td><code>${s.tagged_fallacy || 'None (Mastered)'}</code></td>
-              <td>${s.iteration_count}</td>
+              <td style="font-family: var(--font-mono);">${s.iteration_count}</td>
             `;
             sBody.appendChild(tr);
           }
@@ -436,7 +335,7 @@ Key Remediation: ${c.remediation_suggestion}
           `;
         }
       } catch (err) {
-        console.error('Failed to load instructor data', err);
+        console.error('Failed to load instructor telemetry', err);
       }
     }
 
@@ -450,9 +349,15 @@ Key Remediation: ${c.remediation_suggestion}
       const force = forceBox.checked;
 
       btn.disabled = true;
-      btn.textContent = 'Analyzing...';
+      btn.textContent = 'Synthesizing...';
+      resDiv.className = 'status-box loading';
       resDiv.style.display = 'block';
-      resDiv.innerHTML = '<div style="color: var(--text-muted); font-size: 0.85rem;">⏳ Agent reading lecture invariants, transcript, and diagnosing common fallacies...</div>';
+      resDiv.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div class="loading-spinner"></div>
+          <span>Analyzing concept invariants and synthesizing targeted pedagogical counters...</span>
+        </div>
+      `;
 
       try {
         const resp = await fetch('/api/discover-fallacies', {
@@ -463,42 +368,50 @@ Key Remediation: ${c.remediation_suggestion}
         const data = await resp.json();
 
         if (data.error) {
-          resDiv.innerHTML = `<div style="color: #ef4444; font-size: 0.85rem;">⚠️ Error: ${data.error}</div>`;
+          resDiv.className = 'status-box error';
+          resDiv.innerHTML = `<strong>Error:</strong> ${data.error}`;
         } else {
           let html = `
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
-              <strong style="color: var(--accent); font-size: 0.95rem;">✓ Discovered Fallacies for ${data.concept_id}:</strong>
-              <button onclick="document.getElementById('discover-result').style.display='none'" class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">Close</button>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+              <strong style="color: var(--text-primary); font-size: 0.95rem;">Synthesized Invariants for <span style="color:var(--accent); font-family:var(--font-mono);">${data.concept_id}</span>:</strong>
+              <button onclick="document.getElementById('discover-result').style.display='none'" class="btn-secondary" style="padding: 3px 8px; font-size: 0.76rem;">Close</button>
             </div>
+            <div class="fallacy-diagnostic-list">
           `;
           for (const f of data.fallacies) {
             html += `
-              <div style="margin-top: 10px; padding: 10px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--accent);">
-                <div style="font-weight: bold; color: var(--text-primary); font-size: 0.85rem;"><code>${f.tag}</code></div>
-                <div style="color: var(--text-secondary); font-size: 0.8rem; margin-top: 2px;"><strong>Description:</strong> ${f.description}</div>
-                <div style="color: var(--text-muted); font-size: 0.8rem; margin-top: 2px;"><strong>Flawed claim:</strong> "${f.example_claim}"</div>
-                <div style="color: #10b981; font-size: 0.8rem; margin-top: 2px;"><strong>Socratic Counter:</strong> ${f.pedagogical_counter}</div>
+              <div class="fallacy-diagnostic-item">
+                <div class="fallacy-tag-row">
+                  <span class="fallacy-tag-chip">${f.tag}</span>
+                  <span class="badge badge-amber">Heuristic Flag</span>
+                </div>
+                <div class="fallacy-desc-line"><strong>Invariant Definition:</strong> ${f.description}</div>
+                <div class="fallacy-claim-box"><strong>Quotable Student Claim:</strong> "${f.example_claim}"</div>
+                <div class="fallacy-counter-box"><strong>Targeted Socratic Counter:</strong> ${f.pedagogical_counter}</div>
               </div>
             `;
           }
+          html += `</div>`;
           if (data.opening_question) {
             html += `
-              <div style="margin-top: 10px; font-size: 0.8rem; color: var(--accent);">
-                <strong>Diagnostic Opening Question:</strong> ${data.opening_question}
+              <div class="diagnostic-opening-q">
+                <strong style="color: var(--accent);">Compiled Opening Diagnostic Probe:</strong>
+                <div style="margin-top: 4px; color: var(--text-secondary);">${data.opening_question}</div>
               </div>
             `;
           }
+          resDiv.className = 'status-box success';
           resDiv.innerHTML = html;
         }
       } catch (err) {
-        resDiv.innerHTML = `<div style="color: #ef4444; font-size: 0.85rem;">⚠️ Network error: ${err.message}</div>`;
+        resDiv.className = 'status-box error';
+        resDiv.innerHTML = `<strong>Network error:</strong> ${err.message}`;
       } finally {
         btn.disabled = false;
-        btn.textContent = 'Run Discovery';
+        btn.textContent = 'Run Diagnostic Synthesis →';
       }
     }
 
-    // Dynamic lectures list loader
     async function refreshLecturesList(selectedId) {
       try {
         const res = await fetch('/api/lectures');
@@ -527,9 +440,10 @@ Key Remediation: ${c.remediation_suggestion}
       if (file) {
         document.getElementById('dropzone-prompt').style.display = 'none';
         const info = document.getElementById('file-info');
-        info.style.display = 'block';
+        info.style.display = 'flex';
+        document.getElementById('file-selected-name').textContent = file.name;
         const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
-        info.innerHTML = `📄 <strong>${file.name}</strong> (${sizeMb} MB) <span style="font-size: 0.78rem; color: var(--accent-light); cursor: pointer; text-decoration: underline; margin-left: 10px;" onclick="event.stopPropagation(); clearFile();">Change</span>`;
+        document.getElementById('file-selected-size').textContent = `(${sizeMb} MB)`;
       }
     }
 
@@ -540,7 +454,7 @@ Key Remediation: ${c.remediation_suggestion}
       document.getElementById('file-info').style.display = 'none';
     }
 
-    // Setup drag and drop
+    // Drag and drop events
     const dropzone = document.getElementById('dropzone');
     if (dropzone) {
       ['dragenter', 'dragover'].forEach(name => {
@@ -588,6 +502,7 @@ Key Remediation: ${c.remediation_suggestion}
       const resBox = document.getElementById('upload-result-box');
 
       btn.disabled = true;
+      progBox.className = 'status-box loading';
       progBox.style.display = 'block';
       resBox.style.display = 'none';
       progText.textContent = 'Extracting lecture slides & synthesizing invariants with Fallacy Discovery Agent...';
@@ -606,62 +521,72 @@ Key Remediation: ${c.remediation_suggestion}
         const data = await resp.json();
 
         if (!resp.ok || data.error) {
+          resBox.className = 'status-box error';
           resBox.style.display = 'block';
-          resBox.innerHTML = `<div style="color: #ef4444; font-size: 0.9rem;">⚠️ <strong>Upload Failed:</strong> ${data.error || 'Server error'}</div>`;
+          resBox.innerHTML = `<strong>Upload Failed:</strong> ${data.error || 'Server error'}`;
         } else {
-          resBox.style.display = 'block';
           let fallaciesHtml = '';
           if (data.fallacies && data.fallacies.length > 0) {
             fallaciesHtml = `
-              <div style="margin-top: 12px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Discovered Misconceptions (${data.fallacies.length}):</div>
-              <div style="display: grid; gap: 8px; margin-top: 6px;">
+              <div style="margin-top: 14px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">
+                Compiled Cognitive Fallacies (${data.fallacies.length}):
+              </div>
+              <div class="fallacy-diagnostic-list">
                 ${data.fallacies.map(f => `
-                  <div style="padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--accent); font-size: 0.8rem;">
-                    <code style="color: var(--accent); font-weight: bold;">${f.tag}</code>: ${f.description}
+                  <div class="fallacy-diagnostic-item">
+                    <div class="fallacy-tag-row">
+                      <span class="fallacy-tag-chip">${f.tag}</span>
+                      <span class="badge badge-blue">Compiled Invariant</span>
+                    </div>
+                    <div class="fallacy-desc-line">${f.description}</div>
                   </div>
                 `).join('')}
               </div>
             `;
           }
 
+          resBox.className = 'status-box success';
+          resBox.style.display = 'block';
           resBox.innerHTML = `
-            <div style="display: flex; justify-content: space-between; align-items: center;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span style="font-size: 1.2rem;">✅</span>
-                <strong style="color: #10b981; font-size: 1rem;">Lecture ${data.lecture_num} Successfully Published!</strong>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div>
+                <span class="badge badge-green">INGESTION COMPLETE</span>
+                <strong style="color: var(--text-primary); font-size: 1rem; margin-left: 8px;">Lecture ${data.lecture_num} Successfully Published</strong>
               </div>
-              <button onclick="document.getElementById('upload-result-box').style.display='none'" class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">Close</button>
+              <button onclick="document.getElementById('upload-result-box').style.display='none'" class="btn-secondary" style="padding: 3px 8px; font-size: 0.76rem;">Close</button>
             </div>
-            <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-primary);">
-              <strong>Title:</strong> ${data.title} &bull; <code style="color: var(--text-muted);">${data.concept_id}</code>
+            <div style="margin-top: 8px; font-size: 0.86rem; color: var(--text-primary);">
+              <strong>Module:</strong> ${data.title} &bull; <code style="font-family:var(--font-mono); color:var(--accent);">${data.concept_id}</code>
             </div>
             ${data.opening_question ? `
-              <div style="margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary); background: rgba(99, 102, 241, 0.08); padding: 8px 12px; border-radius: 6px;">
-                <strong style="color: var(--accent-light);">Diagnostic Opening Question:</strong> ${data.opening_question}
+              <div class="diagnostic-opening-q">
+                <strong style="color: var(--accent);">Generated Diagnostic Opening Question:</strong>
+                <div style="margin-top: 4px; color: var(--text-secondary);">${data.opening_question}</div>
               </div>
             ` : ''}
             ${fallaciesHtml}
-            <div style="margin-top: 14px; display: flex; gap: 12px; align-items: center;">
-              <a href="/chat/${data.concept_id}" target="_blank" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem; text-decoration: none;">
-                Test Socratic Revision ↗
+            <div style="margin-top: 16px; display: flex; gap: 12px; align-items: center;">
+              <a href="/chat/${data.concept_id}" target="_blank" class="btn-primary" style="padding: 7px 16px; font-size: 0.84rem; text-decoration: none;">
+                Launch Diagnostic Revision Workstation &rarr;
               </a>
               <span style="font-size: 0.8rem; color: var(--text-muted);">
-                ✓ New card is now available on the student dashboard!
+                Module card is now live on student revision dashboard.
               </span>
             </div>
           `;
 
-          // Clear input fields
+          // Reset inputs
           document.getElementById('upload-title').value = '';
           document.getElementById('upload-desc').value = '';
           clearFile();
 
-          // Refresh lectures dropdown in the Fallacy Discovery card
+          // Refresh select
           await refreshLecturesList(data.concept_id);
         }
       } catch (err) {
+        resBox.className = 'status-box error';
         resBox.style.display = 'block';
-        resBox.innerHTML = `<div style="color: #ef4444; font-size: 0.9rem;">⚠️ Network error: ${err.message}</div>`;
+        resBox.innerHTML = `<strong>Network error:</strong> ${err.message}`;
       } finally {
         btn.disabled = false;
         progBox.style.display = 'none';
@@ -670,7 +595,6 @@ Key Remediation: ${c.remediation_suggestion}
 
     loadData();
     refreshLecturesList();
-    // Auto-refresh every 5 seconds
     setInterval(loadData, 5000);
   </script>
 </body>
