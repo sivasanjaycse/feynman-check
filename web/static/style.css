@@ -67,6 +67,66 @@
   --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.6);
 
   --transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  --grid-line-color: rgba(255, 255, 255, 0.025);
+}
+
+/* ============================================================
+   Light Theme (Academic / Engineering Workstation)
+   Clean, high-contrast, paper-and-slate aesthetic.
+   ============================================================ */
+
+[data-theme="light"] {
+  /* Surface hierarchy */
+  --bg-canvas: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-surface-subtle: #f1f5f9;
+  --bg-surface-elevated: #e2e8f0;
+  --bg-surface-hover: #e6edf5;
+
+  /* Borders */
+  --border-subtle: #e2e8f0;
+  --border-default: #cbd5e1;
+  --border-strong: #94a3b8;
+  --border-active: #2563eb;
+  --border-strong-hover: #64748b;
+
+  /* Compatibility aliases */
+  --bg-primary: var(--bg-canvas);
+  --bg-main: var(--bg-canvas);
+  --bg-card: var(--bg-surface);
+  --border-color: var(--border-default);
+  --border-glass: var(--border-subtle);
+  --bg-glass: var(--bg-surface-subtle);
+  --bg-secondary: var(--bg-surface-elevated);
+  --accent-light: #3b82f6;
+  --accent-glow: rgba(37, 99, 235, 0.15);
+
+  /* Typography */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --text-dim: #94a3b8;
+
+  /* Functional Accents */
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-subtle: rgba(37, 99, 235, 0.08);
+
+  --success: #059669;
+  --success-subtle: rgba(5, 150, 105, 0.08);
+
+  --warning: #d97706;
+  --warning-subtle: rgba(217, 119, 6, 0.08);
+
+  --danger: #dc2626;
+  --danger-subtle: rgba(220, 38, 38, 0.08);
+
+  /* Shadows for light canvas */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.07);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.09);
+
+  --grid-line-color: rgba(15, 23, 42, 0.035);
 }
 
 * {
@@ -91,8 +151,8 @@ body::before {
   position: fixed;
   inset: 0;
   background-image: 
-    linear-gradient(to right, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+    linear-gradient(to right, var(--grid-line-color) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line-color) 1px, transparent 1px);
   background-size: 32px 32px;
   pointer-events: none;
   z-index: 0;
@@ -1313,4 +1373,169 @@ body::before {
 
 .back-link:hover {
   color: var(--accent);
+}
+
+/* ============================================================
+   Theme Switcher & Light Mode Component Refinements
+   ============================================================ */
+
+.theme-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-md);
+  font-family: var(--font-sans);
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  text-decoration: none;
+}
+
+.theme-toggle-btn:hover {
+  background: var(--bg-surface-elevated);
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
+
+.theme-icon {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.theme-toggle-fixed {
+  position: fixed;
+  top: 1rem;
+  right: 1.25rem;
+  z-index: 50;
+}
+
+/* Light Theme Component Specifics */
+[data-theme="light"] .badge-blue {
+  background: var(--accent-subtle);
+  color: #1d4ed8;
+  border-color: rgba(37, 99, 235, 0.25);
+}
+
+[data-theme="light"] .badge-green {
+  background: var(--success-subtle);
+  color: #047857;
+  border-color: rgba(5, 150, 105, 0.25);
+}
+
+[data-theme="light"] .badge-amber {
+  background: var(--warning-subtle);
+  color: #b45309;
+  border-color: rgba(217, 119, 6, 0.25);
+}
+
+[data-theme="light"] .badge-red {
+  background: var(--danger-subtle);
+  color: #b91c1c;
+  border-color: rgba(220, 38, 38, 0.25);
+}
+
+[data-theme="light"] .brand-icon {
+  background: #eff6ff;
+  border-color: #bfdbfe;
+  color: #2563eb;
+}
+
+[data-theme="light"] .role-tab.active-student {
+  background: #ffffff;
+  color: #0f172a;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .role-tab.active-instructor {
+  background: #ffffff;
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+[data-theme="light"] .dialogue-turn.agent .turn-bubble,
+[data-theme="light"] .message.agent {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .dialogue-turn.student .turn-bubble,
+[data-theme="light"] .message.student {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #0f172a;
+}
+
+[data-theme="light"] .dialogue-turn.agent .turn-author,
+[data-theme="light"] .message.agent .label {
+  color: #2563eb;
+}
+
+[data-theme="light"] .dialogue-turn.student .turn-author,
+[data-theme="light"] .message.student .label {
+  color: #64748b;
+}
+
+[data-theme="light"] .back-edge-alert-card {
+  background: #fffbeb;
+  border-color: #f59e0b;
+}
+
+[data-theme="light"] .back-edge-header {
+  color: #b45309;
+}
+
+[data-theme="light"] .state-step.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+[data-theme="light"] .state-step.back-edge-active {
+  background: #fffbeb;
+  border-color: #fcd34d;
+  color: #92400e;
+}
+
+[data-theme="light"] .inspector-toggle-btn.active {
+  background: #eff6ff;
+  border-color: #93c5fd;
+  color: #1d4ed8;
+}
+
+[data-theme="light"] .escalation-top-banner {
+  background: #fef2f2;
+  border-bottom: 1px solid #fca5a5;
+  color: #991b1b;
+}
+
+[data-theme="light"] .memory-box {
+  background: #f8fafc;
+  color: #334155;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .report-overlay {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+[data-theme="light"] .round-verdict.MASTERED { background: rgba(5, 150, 105, 0.12); color: #047857; }
+[data-theme="light"] .round-verdict.MISCONCEPTION { background: rgba(220, 38, 38, 0.12); color: #b91c1c; }
+[data-theme="light"] .round-verdict.AMBIGUOUS { background: rgba(217, 119, 6, 0.12); color: #b45309; }
+
+[data-theme="light"] .email-box {
+  background: #fffbeb;
+  border-color: #f59e0b;
+  color: #92400e;
+}
+
+[data-theme="light"] .cluster-card.triggered {
+  background: #fef2f2;
+  border-color: #f87171;
 }

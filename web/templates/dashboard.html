@@ -6,7 +6,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Feynman Check — Course Catalog</title>
   <meta name="description" content="Select an Object-Oriented Programming lecture to begin Socratic concept revision.">
-  <link rel="stylesheet" href="/static/style.css?v=2.2">
+  <link rel="stylesheet" href="/static/style.css?v=2.3">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("fc_theme");
+      if (saved === "light" || (!saved && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script src="/static/theme.js" defer></script>
 </head>
 
 <body>
@@ -20,6 +29,10 @@
         <strong>Course Revision Catalog</strong>
       </div>
       <div class="user-profile-badge">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme">
+          <span class="theme-icon">☀️</span>
+          <span class="theme-toggle-text">Light</span>
+        </button>
         <div class="user-info">
           <div class="user-name">{{STUDENT_NAME}}</div>
           <div class="user-roll">Roll: {{STUDENT_ROLL}}</div>

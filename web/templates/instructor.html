@@ -7,7 +7,16 @@
   <title>Feynman Check — Instructor Dashboard & Alert Monitor</title>
   <meta name="description"
     content="Instructor gap detection monitor, telemetry clusters, and automated email escalation status">
-  <link rel="stylesheet" href="/static/style.css?v=2.2">
+  <link rel="stylesheet" href="/static/style.css?v=2.3">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("fc_theme");
+      if (saved === "light" || (!saved && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script src="/static/theme.js" defer></script>
   <style>
     .instructor-container {
       max-width: 1000px;
@@ -167,7 +176,11 @@
           Real-time Misconception Clusters & Email Escalation Trigger
         </p>
       </div>
-      <div>
+      <div style="display: flex; align-items: center;">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme" style="margin-right: 8px;">
+          <span class="theme-icon">☀️</span>
+          <span class="theme-toggle-text">Light</span>
+        </button>
         <a href="/instructor/logout" class="btn-secondary" style="margin-right: 8px;">Logout</a>
         <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄
           Refresh</button>

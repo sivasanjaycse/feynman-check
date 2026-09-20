@@ -5,7 +5,16 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Feynman Check — Instructor Access</title>
   <meta name="description" content="Instructor login for Feynman Check monitoring dashboard">
-  <link rel="stylesheet" href="/static/style.css?v=2.2">
+  <link rel="stylesheet" href="/static/style.css?v=2.3">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("fc_theme");
+      if (saved === "light" || (!saved && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script src="/static/theme.js" defer></script>
   <style>
     body {
       display: flex;
@@ -21,7 +30,7 @@
       padding: 40px;
       width: 100%;
       max-width: 380px;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      box-shadow: var(--shadow-lg);
     }
     .login-icon {
       font-size: 2.5rem;
@@ -119,6 +128,13 @@
   </style>
 </head>
 <body>
+  <div class="theme-toggle-fixed">
+    <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme">
+      <span class="theme-icon">☀️</span>
+      <span class="theme-toggle-text">Light</span>
+    </button>
+  </div>
+
   <div class="login-card">
     <div class="login-icon">🔐</div>
     <h1>Instructor Access</h1>
