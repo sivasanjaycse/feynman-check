@@ -278,6 +278,84 @@ CANNED_STUDENTS: Dict[str, Dict[str, Any]] = {
             tagged_fallacy=None,
         ),
     },
+    "alice_oop": {
+        "student_id": "2023101001",
+        "name": "Alice",
+        "concept_id": "oop_lecture_1",
+        "initial_text": "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="CLASS_IS_AN_OBJECT",
+            flaw_explanation="Conflating class blueprint definition with runtime heap-allocated object instance.",
+            violates_invariant=True,
+            confidence=0.95,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_alice_1",
+            counter_example_scenario="If writing 'class Car' allocated memory on the heap, how many cars exist in memory before you ever write 'new Car()'?",
+            target_invariant="Class vs Object",
+        ),
+        "revision_text": "None! The class is only a blueprint; no memory is allocated on the heap until new Car() is executed.",
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.98,
+        ),
+    },
+    "bob_oop": {
+        "student_id": "2023101002",
+        "name": "Bob",
+        "concept_id": "oop_lecture_1",
+        "initial_text": "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="CLASS_IS_AN_OBJECT",
+            flaw_explanation="Conflating class blueprint with object instantiation.",
+            violates_invariant=True,
+            confidence=0.94,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_bob_1",
+            counter_example_scenario="If class Dog created an object immediately, what does 'new Dog()' do, and how many dogs exist before writing new?",
+            target_invariant="Class vs Object",
+        ),
+        "revision_text": "Writing class Dog defines the blueprint, but zero dogs exist until new Dog() allocates memory on the heap.",
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.97,
+        ),
+    },
+    "charlie_oop": {
+        "student_id": "2023101003",
+        "name": "Charlie",
+        "concept_id": "oop_lecture_1",
+        "initial_text": "When you write class Dog, that creates a Dog in memory.",
+        "initial_verdict": CriticVerdict(
+            verdict="MISCONCEPTION",
+            detected_flaw_tag="CLASS_IS_AN_OBJECT",
+            flaw_explanation="Conflates class definition with runtime object instantiation.",
+            violates_invariant=True,
+            confidence=0.96,
+        ),
+        "probe": ProbeMessage(
+            probe_id="probe_charlie_1",
+            counter_example_scenario="If class Dog creates a Dog in memory, why do we need 'new Dog()' to allocate heap space?",
+            target_invariant="Class vs Object",
+        ),
+        "revision_text": "A class is just a template. No memory is allocated on the heap until new is called.",
+        "revision_verdict": CriticVerdict(
+            verdict="MASTERED",
+            detected_flaw_tag=None,
+            flaw_explanation=None,
+            violates_invariant=False,
+            confidence=0.98,
+        ),
+    },
     "ambiguous": {
         "student_id": "20231038888",
         "name": "AmbiguousStudent",
@@ -750,7 +828,13 @@ def evaluate_student_text(text: str, concept_id: str = "virtual_memory") -> Crit
         )
 
     # 3. Static per-concept rules (fast path for known concepts)
-    for rule in _CONCEPT_FALLACY_RULES.get(concept_id, []):
+    rules_to_check = list(_CONCEPT_FALLACY_RULES.get(concept_id, []))
+    if concept_id == "virtual_memory":
+        for other_cid, other_rules in _CONCEPT_FALLACY_RULES.items():
+            if other_cid != concept_id:
+                rules_to_check.extend(other_rules)
+
+    for rule in rules_to_check:
         if rule["check"](t_lower):
             return CriticVerdict(
                 verdict="MISCONCEPTION",

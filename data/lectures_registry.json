@@ -40,23 +40,5 @@
     "num": 7,
     "title": "SOLID Principles",
     "desc": "SRP, OCP, DIP, God class anti-pattern, favour composition"
-  },
-  {
-    "id": "live_test_binary_search_trees",
-    "num": 8,
-    "title": "Live Test: Binary Search Trees",
-    "desc": "BST invariants and AVL balancing"
-  },
-  {
-    "id": "live_test_binary_search_trees_2",
-    "num": 9,
-    "title": "Live Test: Binary Search Trees",
-    "desc": "BST invariants and AVL balancing"
-  },
-  {
-    "id": "encapsulation_mitlecture",
-    "num": 10,
-    "title": "encapsulation_MITlecture",
-    "desc": "Encapsulationis anObject Oriented Prog ramming conceptthat binds tog ether the data and functions"
   }
 ]

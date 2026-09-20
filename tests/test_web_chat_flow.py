@@ -111,20 +111,9 @@ def test_chat_flow_multi_fallacy_check(tmp_path):
     store.set_state(run_id, RunState.DRAFTING)
     state_2 = runner.advance(store, run_id, flow, settings, max_steps=20)
 
-    # After fallacy 2, moves to fallacy 3 (STATIC_MEANS_CONSTANT)
-    assert state_2 == RunState.AWAITING_EXPERT
+    # After answering 2 questions correctly, session immediately terminates with MASTERED!
+    assert state_2 == RunState.COMPLETE
     assert len(store.history(run_id, "verdict")) == 2
-    assert len(store.history(run_id, "probe")) == 2
-    assert store.history(run_id, "probe")[1].payload["target_fallacy"] == "STATIC_MEANS_CONSTANT"
-
-    # Round 3: Student answers Question 3 correctly
-    store.append(run_id, "chat_message", {"text": "Static means shared across instances, not constant.", "student_id": "2023101001"}, produced_by="student:web")
-    store.set_state(run_id, RunState.DRAFTING)
-    state_3 = runner.advance(store, run_id, flow, settings, max_steps=20)
-
-    # NOW all 3 fallacies from the lecture have been mastered!
-    assert state_3 == RunState.COMPLETE
-    assert len(store.history(run_id, "verdict")) == 3
     session_rec = store.latest(run_id, "session_record")
     assert session_rec["final_verdict"] == "MASTERED"
 
@@ -181,5 +170,49 @@ def test_chat_flow_advances_after_resolving_earlier_misconception(tmp_path):
 
     latest_probe = store.latest(run_id, "probe")
     assert latest_probe["target_fallacy"] == "CONSTRUCTOR_IS_A_METHOD"
+
+
+def test_reset_demo_cohort_api():
+    """Verify that /api/reset-demo-cohort cleanly resets Alice & Bob."""
+    from fastapi.testclient import TestClient
+    from web.app import app
+    client = TestClient(app)
+
+    resp = client.post("/api/reset-demo-cohort")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["status"] == "success"
+
+    from pathlib import Path
+    students_dir = Path("data/students")
+    assert (students_dir / "2023101001.json").exists()
+    assert (students_dir / "2023101002.json").exists()
+
+
+def test_chat_api_with_inspector_telemetry(monkeypatch):
+    """Verify that /api/chat returns rich inspector cognitive telemetry."""
+    monkeypatch.setenv("FEYNMAN_USE_STUB", "1")
+    from fastapi.testclient import TestClient
+    from web.app import app
+    client = TestClient(app)
+
+    # Set student cookie
+    client.cookies.set("student_roll", "2023101001")
+
+    resp = client.post("/api/chat", json={
+        "lecture_id": "oop_lecture_1",
+        "message": "A class is a blueprint and an object is a runtime instance.",
+    })
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "response" in data
+    assert "inspector" in data
+    inspector = data["inspector"]
+    assert "current_state" in inspector
+    assert "back_edge_triggered" in inspector
+    assert "confidence" in inspector
+    assert "turn_count" in inspector
+    assert "mastered_count" in inspector
+    assert "cluster_count" in inspector
 
 

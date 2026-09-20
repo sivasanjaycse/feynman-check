@@ -4,28 +4,41 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Feynman Check — Dashboard</title>
-  <meta name="description" content="Select a lecture to start your Socratic revision session">
+  <title>Feynman Check — Course Catalog</title>
+  <meta name="description" content="Select an Object-Oriented Programming lecture to begin Socratic concept revision.">
   <link rel="stylesheet" href="/static/style.css">
 </head>
 
 <body>
   <div class="dashboard-container">
-    <div class="dashboard-header">
-      <div>
-        <h1>📚 OOP Revision</h1>
-      </div>
-      <div class="user-info">
-        <span class="name">👋 {{STUDENT_NAME}} ({{STUDENT_ROLL}})</span>
-        <a href="/logout" class="logout-btn" id="logout-btn">Logout</a>
-      </div>
-    </div>
 
-    <p class="section-title">Choose a lecture to revise</p>
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+      <div class="nav-breadcrumbs">
+        <span>CS3301 OOAD</span>
+        <span>/</span>
+        <strong>Course Revision Catalog</strong>
+      </div>
+      <div class="user-profile-badge">
+        <div class="user-info">
+          <div class="user-name">{{STUDENT_NAME}}</div>
+          <div class="user-roll">Roll: {{STUDENT_ROLL}}</div>
+        </div>
+        <a href="/logout" class="btn-secondary" id="logout-btn">Log Out</a>
+      </div>
+    </header>
 
-    <div class="lecture-grid">
+    <!-- Dashboard Hero -->
+    <section class="dashboard-hero">
+      <h2>Select a Lecture for Socratic Revision</h2>
+      <p>Engage in a diagnostic dialogue to verify invariant understanding and surface potential mental fallacies.</p>
+    </section>
+
+    <!-- 7 OOP Lecture Cards Grid -->
+    <main class="lecture-grid" id="lecture-grid">
       {{LECTURE_CARDS}}
-    </div>
+    </main>
+
   </div>
 
   <script>
@@ -34,22 +47,26 @@
         const res = await fetch('/api/lectures');
         const lectures = await res.json();
         if (!Array.isArray(lectures) || lectures.length === 0) return;
-        const grid = document.querySelector('.lecture-grid');
+        const grid = document.getElementById('lecture-grid');
         if (!grid) return;
         grid.innerHTML = lectures.map(lec => `
           <a href="/chat/${lec.id}" class="lecture-card" id="card-${lec.id}">
-            <div class="lecture-num">Lecture ${lec.num}</div>
+            <div class="lecture-meta-row">
+              <span class="lecture-num">Lecture ${lec.num}</span>
+              <span class="badge badge-blue">OOP Core</span>
+            </div>
             <div class="lecture-title">${lec.title}</div>
             <div class="lecture-desc">${lec.desc || ''}</div>
-            <div class="lecture-action">Start Revision →</div>
+            <div class="lecture-card-footer">
+              <span class="action-link">Start Revision &rarr;</span>
+            </div>
           </a>
         `).join('');
       } catch (e) {
-        // Fallback to server-rendered cards
+        // Fallback to server rendered HTML
       }
     }
 
-    // Refresh when tab gains focus or on load
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         refreshDashboardLectures();
@@ -57,5 +74,4 @@
     });
   </script>
 </body>
-
 </html>

@@ -1,19 +1,13 @@
 {
   "student_id": "2023101001",
-  "concept_id": "encapsulation_mitlecture",
-  "lecture_id": null,
-  "iteration_count": 3,
-  "initial_text": "any variable declared in the class is visible to all and it can be changed directly through object which may cause unexpected changes and risks are high is data modification",
+  "concept_id": "oop_lecture_1",
+  "lecture_id": "oop_lecture_1",
+  "iteration_count": 1,
+  "initial_text": "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
   "probes_issued": [
-    "Great insight — you clearly grasp why public access is risky. Now consider this: Class A declares Class B as a friend and gives B direct access to its private balance field. B can read and modify balance without any validation. Does this arrangement preserve data hiding, or does it create a hidden vulnerability? ```cpp\nclass A { private: int balance; friend class B; }; ```",
-    "I see you recognize that friendship breaks data hiding — that's a solid observation. But consider this: even when Class B 'needs' access, what if B accidentally passes balance to a third party? ```cpp\nclass A { private: int balance; friend class B; }; class B { public: void leak(A& a) { return a.balance; } }; ``` The need for access doesn't create a safety guarantee. So what protects balance if B itself is compromised?",
-    "Good — you've seen how friendship exposes internals. Now consider a class with no access specifier at all:\n\n```cpp\nclass Account {\n    int secret = 100;\n};\nAccount a;\na.secret = 200; // What happens here?\n```\n\nIf you assumed members are public by default, what would this code do?"
+    "If declaring 'class Car' allocated memory on the heap, how much memory would be allocated before you ever instantiate it?"
   ],
-  "student_revisions": [
-    "it does not preserve datahiding and about vulnerability B is declared as A friend because B needs to access some variables in a so accessing the required variable doesn't cause any vulnerbility",
-    "this code example you have given shows the vulnerability of private data exposing to public world \nso yeah you are right",
-    "member  variable of class is being changed by object here directly from public world instead of using any functions"
-  ],
+  "student_revisions": [],
   "final_verdict": "UNRESOLVED_ESCALATE",
-  "tagged_fallacy": "FRIEND_CLASSES_ARE_SAFE"
+  "tagged_fallacy": "CLASS_IS_AN_OBJECT"
 }
