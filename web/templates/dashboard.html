@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -7,6 +8,7 @@
   <meta name="description" content="Select a lecture to start your Socratic revision session">
   <link rel="stylesheet" href="/static/style.css">
 </head>
+
 <body>
   <div class="dashboard-container">
     <div class="dashboard-header">
@@ -14,7 +16,6 @@
         <h1>📚 OOP Revision</h1>
       </div>
       <div class="user-info">
-        <a href="/instructor" class="logout-btn" style="background: rgba(99, 102, 241, 0.2); border-color: rgba(99, 102, 241, 0.4); color: #a5b4fc; text-decoration: none;" target="_blank">👨‍🏫 Instructor Monitor</a>
         <span class="name">👋 {{STUDENT_NAME}} ({{STUDENT_ROLL}})</span>
         <a href="/logout" class="logout-btn" id="logout-btn">Logout</a>
       </div>
@@ -26,5 +27,35 @@
       {{LECTURE_CARDS}}
     </div>
   </div>
+
+  <script>
+    async function refreshDashboardLectures() {
+      try {
+        const res = await fetch('/api/lectures');
+        const lectures = await res.json();
+        if (!Array.isArray(lectures) || lectures.length === 0) return;
+        const grid = document.querySelector('.lecture-grid');
+        if (!grid) return;
+        grid.innerHTML = lectures.map(lec => `
+          <a href="/chat/${lec.id}" class="lecture-card" id="card-${lec.id}">
+            <div class="lecture-num">Lecture ${lec.num}</div>
+            <div class="lecture-title">${lec.title}</div>
+            <div class="lecture-desc">${lec.desc || ''}</div>
+            <div class="lecture-action">Start Revision →</div>
+          </a>
+        `).join('');
+      } catch (e) {
+        // Fallback to server-rendered cards
+      }
+    }
+
+    // Refresh when tab gains focus or on load
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') {
+        refreshDashboardLectures();
+      }
+    });
+  </script>
 </body>
+
 </html>

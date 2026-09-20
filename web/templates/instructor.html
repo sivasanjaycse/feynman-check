@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Feynman Check — Instructor Dashboard & Alert Monitor</title>
-  <meta name="description" content="Instructor gap detection monitor, telemetry clusters, and automated email escalation status">
+  <meta name="description"
+    content="Instructor gap detection monitor, telemetry clusters, and automated email escalation status">
   <link rel="stylesheet" href="/static/style.css">
   <style>
     .instructor-container {
@@ -12,6 +14,7 @@
       margin: 0 auto;
       padding: 30px 20px;
     }
+
     .top-bar {
       display: flex;
       justify-content: space-between;
@@ -20,28 +23,33 @@
       border-bottom: 1px solid var(--border-color);
       padding-bottom: 16px;
     }
+
     .stats-row {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
       margin-bottom: 24px;
     }
+
     .stat-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
       border-radius: 12px;
       padding: 18px;
     }
+
     .stat-num {
       font-size: 2rem;
       font-weight: 700;
       color: var(--accent);
     }
+
     .stat-label {
       font-size: 0.85rem;
       color: var(--text-muted);
       margin-top: 4px;
     }
+
     .cluster-card {
       background: var(--bg-card);
       border: 1px solid var(--border-color);
@@ -49,16 +57,19 @@
       padding: 20px;
       margin-bottom: 16px;
     }
+
     .cluster-card.triggered {
       border-color: #ef4444;
       background: rgba(239, 68, 68, 0.05);
     }
+
     .cluster-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
       margin-bottom: 12px;
     }
+
     .badge-triggered {
       background: #ef4444;
       color: white;
@@ -67,6 +78,7 @@
       font-size: 0.75rem;
       font-weight: 700;
     }
+
     .badge-monitoring {
       background: #f59e0b;
       color: black;
@@ -75,6 +87,7 @@
       font-size: 0.75rem;
       font-weight: 700;
     }
+
     .progress-bar-bg {
       background: rgba(255, 255, 255, 0.1);
       border-radius: 8px;
@@ -82,14 +95,17 @@
       overflow: hidden;
       margin: 10px 0;
     }
+
     .progress-bar-fill {
       height: 100%;
       background: var(--accent);
       transition: width 0.3s ease;
     }
+
     .progress-bar-fill.danger {
       background: #ef4444;
     }
+
     .email-box {
       background: #111827;
       border: 1px dashed #f59e0b;
@@ -101,24 +117,47 @@
       white-space: pre-wrap;
       color: #fde68a;
     }
+
     .student-table {
       width: 100%;
       border-collapse: collapse;
       margin-top: 12px;
     }
-    .student-table th, .student-table td {
+
+    .student-table th,
+    .student-table td {
       padding: 10px 14px;
       text-align: left;
       border-bottom: 1px solid var(--border-color);
       font-size: 0.9rem;
     }
+
     .student-table th {
       color: var(--text-muted);
       font-size: 0.8rem;
       text-transform: uppercase;
     }
+
+    .dropzone-box {
+      border: 2px dashed rgba(99, 102, 241, 0.4);
+      border-radius: 10px;
+      padding: 22px;
+      text-align: center;
+      cursor: pointer;
+      background: rgba(99, 102, 241, 0.03);
+      transition: all 0.2s ease;
+    }
+    .dropzone-box:hover, .dropzone-box.drag-over {
+      border-color: var(--accent);
+      background: rgba(99, 102, 241, 0.1);
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
 </head>
+
 <body>
   <div class="instructor-container">
     <div class="top-bar">
@@ -129,8 +168,9 @@
         </p>
       </div>
       <div>
-        <a href="/dashboard" class="btn-secondary" style="margin-right: 8px;">Student Dashboard</a>
-        <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄 Refresh</button>
+        <a href="/instructor/logout" class="btn-secondary" style="margin-right: 8px;">Logout</a>
+        <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄
+          Refresh</button>
       </div>
     </div>
 
@@ -154,19 +194,88 @@
       </div>
     </div>
 
+    <!-- Upload New Lecture Card (PDF / PPTX) -->
+    <div class="stat-card" style="margin-bottom: 24px; padding: 22px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
+        <div>
+          <h2 style="font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
+            <span>📤</span> Upload New Lecture (PDF / PPTX)
+          </h2>
+          <p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0 0 0;">
+            Upload lecture notes or slide deck. The agent extracts content, synthesizes ground-truth invariants, runs the Fallacy Discovery Agent, and publishes a new revision clipboard to the student dashboard.
+          </p>
+        </div>
+        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-light); border: 1px solid var(--accent); font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AUTO-INGEST</span>
+      </div>
+
+      <form id="lecture-upload-form" onsubmit="event.preventDefault(); submitLectureUpload();" style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
+          <div>
+            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE TITLE *</label>
+            <input type="text" id="upload-title" placeholder="e.g., Binary Search Trees & AVL Trees" required
+              style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+          </div>
+          <div>
+            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">SHORT DESCRIPTION</label>
+            <input type="text" id="upload-desc" placeholder="e.g., BST invariants, rotation mechanisms, balance factor"
+              style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+          </div>
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE FILE (.pdf or .pptx) *</label>
+          <div id="dropzone" class="dropzone-box" onclick="document.getElementById('upload-file').click();">
+            <input type="file" id="upload-file" accept=".pdf,.pptx" style="display: none;" onchange="handleFileSelected(this)">
+            <div id="dropzone-prompt">
+              <div style="font-size: 2rem; margin-bottom: 6px;">📑</div>
+              <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 600;">Click to browse or drag & drop lecture file here</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports PDF (.pdf) or PowerPoint (.pptx) slide decks</div>
+            </div>
+            <div id="file-info" style="display: none; font-size: 0.95rem; color: var(--accent-light); font-weight: 600;"></div>
+          </div>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
+          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+            <input type="checkbox" id="upload-run-discovery" checked style="accent-color: var(--accent); width: 16px; height: 16px;">
+            <span>Run <strong>Fallacy Discovery Agent</strong> during upload to create Section 2 & Section 5</span>
+          </label>
+          <button type="submit" id="upload-btn" class="btn-primary" style="padding: 10px 22px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+            <span>⚡</span> Ingest & Publish Lecture
+          </button>
+        </div>
+      </form>
+
+      <!-- Progress / Loading Status -->
+      <div id="upload-progress-box" style="display: none; margin-top: 18px; padding: 14px 18px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.35);">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <div style="width: 22px; height: 22px; border: 3px solid rgba(99, 102, 241, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;"></div>
+          <span id="upload-progress-text" style="font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
+            Extracting slides/pages and synthesizing invariants with Fallacy Discovery Agent...
+          </span>
+        </div>
+      </div>
+
+      <!-- Result View -->
+      <div id="upload-result-box" style="display: none; margin-top: 18px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);"></div>
+    </div>
+
     <!-- Fallacy Discovery Agent Card -->
     <div class="stat-card" style="margin-bottom: 24px; padding: 20px;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
         <div>
           <h2 style="font-size: 1.15rem; margin: 0;">🧠 Fallacy Discovery Agent</h2>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin: 4px 0 0 0;">
-            Extracts common misconceptions, flawed student claims, and pedagogical counters directly from lecture concept notes.
+            Extracts common misconceptions, flawed student claims, and pedagogical counters directly from lecture
+            concept notes.
           </p>
         </div>
-        <span class="badge" style="background: var(--accent); color: black; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AGENT</span>
+        <span class="badge"
+          style="background: var(--accent); color: black; font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AGENT</span>
       </div>
       <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-        <select id="discover-lecture-select" style="padding: 8px 12px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
+        <select id="discover-lecture-select"
+          style="padding: 8px 12px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
           <option value="oop_lecture_1">Lecture 1: Classes & Objects</option>
           <option value="oop_lecture_2">Lecture 2: Encapsulation & Access Modifiers</option>
           <option value="oop_lecture_3">Lecture 3: Inheritance — IS-A vs HAS-A</option>
@@ -175,12 +284,16 @@
           <option value="oop_lecture_6">Lecture 6: Exception Handling</option>
           <option value="oop_lecture_7">Lecture 7: SOLID Principles</option>
         </select>
-        <label style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
+        <label
+          style="display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: var(--text-muted); cursor: pointer;">
           <input type="checkbox" id="discover-force-checkbox"> Re-synthesize (Force)
         </label>
-        <button id="run-discover-btn" onclick="triggerFallacyDiscovery()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">Run Discovery</button>
+        <button id="run-discover-btn" onclick="triggerFallacyDiscovery()" class="btn-primary"
+          style="padding: 8px 16px; font-size: 0.85rem;">Run Discovery</button>
       </div>
-      <div id="discover-result" style="display: none; margin-top: 16px; padding: 14px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);"></div>
+      <div id="discover-result"
+        style="display: none; margin-top: 16px; padding: 14px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+      </div>
     </div>
 
     <!-- Active Clusters -->
@@ -206,7 +319,8 @@
         </thead>
         <tbody id="student-rows">
           <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records saved yet.</td>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 24px;">No student records
+              saved yet.</td>
           </tr>
         </tbody>
       </table>
@@ -371,9 +485,181 @@ Key Remediation: ${c.remediation_suggestion}
       }
     }
 
+    // Dynamic lectures list loader
+    async function refreshLecturesList(selectedId) {
+      try {
+        const res = await fetch('/api/lectures');
+        const lectures = await res.json();
+        const select = document.getElementById('discover-lecture-select');
+        if (!select || !Array.isArray(lectures)) return;
+
+        const currentVal = selectedId || select.value;
+        select.innerHTML = '';
+        lectures.forEach(lec => {
+          const opt = document.createElement('option');
+          opt.value = lec.id;
+          opt.textContent = `Lecture ${lec.num}: ${lec.title}`;
+          if (lec.id === currentVal) {
+            opt.selected = true;
+          }
+          select.appendChild(opt);
+        });
+      } catch (err) {
+        console.error('Failed to load lectures list', err);
+      }
+    }
+
+    function handleFileSelected(input) {
+      const file = input.files[0];
+      if (file) {
+        document.getElementById('dropzone-prompt').style.display = 'none';
+        const info = document.getElementById('file-info');
+        info.style.display = 'block';
+        const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+        info.innerHTML = `📄 <strong>${file.name}</strong> (${sizeMb} MB) <span style="font-size: 0.78rem; color: var(--accent-light); cursor: pointer; text-decoration: underline; margin-left: 10px;" onclick="event.stopPropagation(); clearFile();">Change</span>`;
+      }
+    }
+
+    function clearFile() {
+      const input = document.getElementById('upload-file');
+      input.value = '';
+      document.getElementById('dropzone-prompt').style.display = 'block';
+      document.getElementById('file-info').style.display = 'none';
+    }
+
+    // Setup drag and drop
+    const dropzone = document.getElementById('dropzone');
+    if (dropzone) {
+      ['dragenter', 'dragover'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.add('drag-over');
+        }, false);
+      });
+      ['dragleave', 'drop'].forEach(name => {
+        dropzone.addEventListener(name, (e) => {
+          e.preventDefault();
+          dropzone.classList.remove('drag-over');
+        }, false);
+      });
+      dropzone.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if (files && files.length) {
+          const input = document.getElementById('upload-file');
+          input.files = files;
+          handleFileSelected(input);
+        }
+      });
+    }
+
+    async function submitLectureUpload() {
+      const title = document.getElementById('upload-title').value.trim();
+      const desc = document.getElementById('upload-desc').value.trim();
+      const fileInput = document.getElementById('upload-file');
+      const file = fileInput.files[0];
+      const runDiscovery = document.getElementById('upload-run-discovery').checked;
+
+      if (!title) {
+        alert('Please enter a lecture title.');
+        return;
+      }
+      if (!file) {
+        alert('Please select a PDF or PPTX file.');
+        return;
+      }
+
+      const btn = document.getElementById('upload-btn');
+      const progBox = document.getElementById('upload-progress-box');
+      const progText = document.getElementById('upload-progress-text');
+      const resBox = document.getElementById('upload-result-box');
+
+      btn.disabled = true;
+      progBox.style.display = 'block';
+      resBox.style.display = 'none';
+      progText.textContent = 'Extracting lecture slides & synthesizing invariants with Fallacy Discovery Agent...';
+
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('title', title);
+      formData.append('description', desc);
+      formData.append('run_discovery', runDiscovery);
+
+      try {
+        const resp = await fetch('/instructor/upload-lecture', {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await resp.json();
+
+        if (!resp.ok || data.error) {
+          resBox.style.display = 'block';
+          resBox.innerHTML = `<div style="color: #ef4444; font-size: 0.9rem;">⚠️ <strong>Upload Failed:</strong> ${data.error || 'Server error'}</div>`;
+        } else {
+          resBox.style.display = 'block';
+          let fallaciesHtml = '';
+          if (data.fallacies && data.fallacies.length > 0) {
+            fallaciesHtml = `
+              <div style="margin-top: 12px; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">Discovered Misconceptions (${data.fallacies.length}):</div>
+              <div style="display: grid; gap: 8px; margin-top: 6px;">
+                ${data.fallacies.map(f => `
+                  <div style="padding: 8px 12px; background: rgba(255,255,255,0.03); border-radius: 6px; border-left: 3px solid var(--accent); font-size: 0.8rem;">
+                    <code style="color: var(--accent); font-weight: bold;">${f.tag}</code>: ${f.description}
+                  </div>
+                `).join('')}
+              </div>
+            `;
+          }
+
+          resBox.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 1.2rem;">✅</span>
+                <strong style="color: #10b981; font-size: 1rem;">Lecture ${data.lecture_num} Successfully Published!</strong>
+              </div>
+              <button onclick="document.getElementById('upload-result-box').style.display='none'" class="btn-secondary" style="padding: 2px 8px; font-size: 0.75rem;">Close</button>
+            </div>
+            <div style="margin-top: 10px; font-size: 0.85rem; color: var(--text-primary);">
+              <strong>Title:</strong> ${data.title} &bull; <code style="color: var(--text-muted);">${data.concept_id}</code>
+            </div>
+            ${data.opening_question ? `
+              <div style="margin-top: 8px; font-size: 0.85rem; color: var(--text-secondary); background: rgba(99, 102, 241, 0.08); padding: 8px 12px; border-radius: 6px;">
+                <strong style="color: var(--accent-light);">Diagnostic Opening Question:</strong> ${data.opening_question}
+              </div>
+            ` : ''}
+            ${fallaciesHtml}
+            <div style="margin-top: 14px; display: flex; gap: 12px; align-items: center;">
+              <a href="/chat/${data.concept_id}" target="_blank" class="btn-primary" style="padding: 6px 14px; font-size: 0.8rem; text-decoration: none;">
+                Test Socratic Revision ↗
+              </a>
+              <span style="font-size: 0.8rem; color: var(--text-muted);">
+                ✓ New card is now available on the student dashboard!
+              </span>
+            </div>
+          `;
+
+          // Clear input fields
+          document.getElementById('upload-title').value = '';
+          document.getElementById('upload-desc').value = '';
+          clearFile();
+
+          // Refresh lectures dropdown in the Fallacy Discovery card
+          await refreshLecturesList(data.concept_id);
+        }
+      } catch (err) {
+        resBox.style.display = 'block';
+        resBox.innerHTML = `<div style="color: #ef4444; font-size: 0.9rem;">⚠️ Network error: ${err.message}</div>`;
+      } finally {
+        btn.disabled = false;
+        progBox.style.display = 'none';
+      }
+    }
+
     loadData();
+    refreshLecturesList();
     // Auto-refresh every 5 seconds
     setInterval(loadData, 5000);
   </script>
 </body>
+
 </html>
