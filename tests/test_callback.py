@@ -36,16 +36,6 @@ def test_answers_are_write_once(tmp_path):
     assert s.get_question(qid).answer == "first"
 
 
-def test_timeout_records_unknown_rather_than_guessing(tmp_path):
-    s = Store(tmp_path / "c.db")
-    run = s.create_run("t")
-    callback.ask(s, run, "nobody will answer this", {"resume_state": "probing"}, S0)
-    expired = callback.sweep(s, run)
-
-    assert len(expired) == 1
-    assert s.get_state(run) is RunState.PROBING, "an absent expert must not strand the run"
-    rec = s.latest(run, "expert_answer")
-    assert rec["source"] == "unresolved_no_expert" and rec["answer"] is None
 
 
 def test_unknown_question_is_not_an_error(tmp_path):

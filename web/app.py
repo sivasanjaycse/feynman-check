@@ -35,9 +35,12 @@ from demo.feynman.flow import (
     log_student_session_state,
 )
 from demo.feynman.batch import (
+    DEFAULT_FACULTY_EMAIL,
+    DEFAULT_SENDER_EMAIL,
     check_and_escalate_batch,
     scan_student_records,
     aggregate_cohort_telemetry,
+    send_email,
 )
 
 # ---------------------------------------------------------------------------
@@ -620,6 +623,7 @@ def api_instructor(request: Request):
     # Count reports in reports/
     reports_dir = Path("reports")
     alerts_count = len(list(reports_dir.glob("*.md"))) if reports_dir.exists() else 0
+    faculty_email = os.getenv("FACULTY_EMAIL", DEFAULT_FACULTY_EMAIL).strip()
 
     return JSONResponse({
         "total_students": total_scanned,
@@ -628,7 +632,42 @@ def api_instructor(request: Request):
         "students": students,
         "alerts_count": alerts_count,
         "threshold": 3,
+        "faculty_email": faculty_email,
     })
+
+
+@app.post("/api/instructor/test-email")
+def api_test_email(request: Request):
+    """Triggers a real test email via Brevo SMTP to verify the faculty escalation pipeline."""
+    if not _get_instructor(request):
+        return JSONResponse({"error": "Unauthorized"}, status_code=401)
+
+    faculty_email = os.getenv("FACULTY_EMAIL", DEFAULT_FACULTY_EMAIL).strip()
+    sender_email = os.getenv("BREVO_SMTP_FROM", DEFAULT_SENDER_EMAIL).strip()
+    subject = "[Feynman Check] Live Brevo SMTP Test Verification"
+    body = (
+        "Dear Professor,\n\n"
+        "This is an automated test alert from your Feynman Check pedagogical system.\n"
+        "Brevo SMTP dispatch is active and verified.\n\n"
+        "When 3 or more students exhibit the same misconception, you will receive "
+        "an automated concept gap alert with remediation guidance.\n\n"
+        "-- Feynman Check Agent"
+    )
+    sent = send_email(subject=subject, body=body, recipient=faculty_email, sender=sender_email)
+    if sent:
+        return JSONResponse({
+            "status": "success",
+            "message": f"Test email successfully dispatched to {faculty_email} (from {sender_email}) via Brevo SMTP.",
+            "recipient": faculty_email,
+            "sender": sender_email,
+        })
+    else:
+        return JSONResponse({
+            "status": "error",
+            "message": "Failed to send email. Check BREVO_SMTP_KEY and server connectivity.",
+            "recipient": faculty_email,
+        }, status_code=500)
+
 
 
 @app.post("/api/discover-fallacies")

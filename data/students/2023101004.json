@@ -1,0 +1,19 @@
+{
+  "student_id": "2023101004",
+  "concept_id": "oop_lecture_2",
+  "lecture_id": null,
+  "iteration_count": 3,
+  "initial_text": "Private members are inherited",
+  "probes_issued": [
+    "I see where you're coming from. Let's consider this example:\n```java\nclass Animal {\n    private String name;  // private field\n    public Animal(String name) { this.name = name; }\n}\n\nclass Dog extends Animal {\n    public Dog(String name) { super(name); }\n    public void printName() { System.out.println(name); }  // Will this compile?\n}\n```",
+    "I see where you're coming from. Let's consider this example:\n```java\nclass Animal {\n    private String name;  // private field\n    public Animal(String name) { this.name = name; }\n}\n\nclass Dog extends Animal {\n    public Dog(String name) { super(name); }\n    public void printName() { System.out.println(name); }  // Will this compile?\n}\n```\nWhat happens when you try to compile this?",
+    "I see where you're coming from. Let's consider this example:\n```java\nclass Animal {\n    private String name;  // private field\n    public Animal(String name) { this.name = name; }\n}\n\nclass Dog extends Animal {\n    public Dog(String name) { super(name); }\n    public void printName() { System.out.println(name); }  // Will this compile?\n}\n```\nWhat happens when you try to compile this?"
+  ],
+  "student_revisions": [
+    "YEs it will since Private members are inherited",
+    "YEs it will since Private members are inherited",
+    "Private members are inherited"
+  ],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "PRIVATE_MEMBERS_INHERITED"
+}

@@ -613,6 +613,27 @@ ${c.remediation_suggestion}
       }
     }
 
+    async function testSendEmail() {
+      const btn = document.getElementById('btn-test-email');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ Dispatching...';
+      try {
+        const res = await fetch('/api/instructor/test-email', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ ' + (data.message || 'Email dispatched successfully!'));
+        } else {
+          alert('❌ ' + (data.message || 'Failed to dispatch email.'));
+        }
+      } catch (err) {
+        alert('❌ Error dispatching test email: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
+      }
+    }
+
     loadData();
     refreshLecturesList();
     setInterval(loadData, 5000);
