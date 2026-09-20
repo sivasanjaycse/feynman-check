@@ -1,16 +1,13 @@
 {
   "student_id": "2023101002",
   "concept_id": "oop_lecture_1",
-  "lecture_id": null,
-  "iteration_count": 3,
-  "initial_text": "A class and an object are essentially the same thing in Java/C++.",
+  "lecture_id": "oop_lecture_1",
+  "iteration_count": 1,
+  "initial_text": "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
   "probes_issued": [
-    "If class Dog has 10 fields, how much heap memory does 'class Dog {}' take before instantiation?"
+    "If class Dog created an object immediately, what would new Dog() do, and how many dogs exist before writing new?"
   ],
-  "student_revisions": [
-    "Both hold the methods and allocate memory when declared.",
-    "Declaring 'Dog myDog;' creates the dog object on the heap."
-  ],
+  "student_revisions": [],
   "final_verdict": "UNRESOLVED_ESCALATE",
   "tagged_fallacy": "CLASS_IS_AN_OBJECT"
 }

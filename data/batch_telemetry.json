@@ -1,36 +1,20 @@
 {
-  "timestamp": "2026-09-20T06:08:19.585283+00:00",
-  "total_students_scanned": 4,
-  "cluster_count": 2,
+  "timestamp": "2026-09-20T04:35:00.000000+00:00",
+  "total_students_scanned": 2,
+  "cluster_count": 1,
   "clusters": {
     "CLASS_IS_AN_OBJECT": {
       "fallacy_tag": "CLASS_IS_AN_OBJECT",
-      "occurrence_count": 3,
+      "occurrence_count": 2,
       "affected_student_ids": [
         "2023101001",
-        "2023101002",
-        "2023101003"
+        "2023101002"
       ],
       "sample_student_quotes": [
-        "When I write 'class Dog', that creates a Dog instance in memory ready to use.",
-        "I thought defining the class allocated the object fields immediately.",
-        "So a class alone creates the object without calling new.",
-        "A class and an object are essentially the same thing in Java/C++.",
-        "Both hold the methods and allocate memory when declared."
+        "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+        "Writing class Dog creates an actual Dog object in RAM immediately when the code runs."
       ],
-      "remediation_suggestion": "Pedagogical Intervention:\n  Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero.\nKey Takeaway: Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero."
-    },
-    "PRIVATE_MEMBERS_INHERITED": {
-      "fallacy_tag": "PRIVATE_MEMBERS_INHERITED",
-      "occurrence_count": 1,
-      "affected_student_ids": [
-        "2023101004"
-      ],
-      "sample_student_quotes": [
-        "Private members are inherited",
-        "YEs it will since Private members are inherited"
-      ],
-      "remediation_suggestion": "Pedagogical Intervention:\n  If private members were accessible in subclasses, the private keyword would provide no encapsulation. Any internal refactoring of the parent would silently break the child's direct field access. The fields exist in the child object's memory, but the child's code cannot name them.\nKey Takeaway: If private members were accessible in subclasses, the private keyword would provide no encapsulation. Any internal refactoring of the parent would silently break the child's direct field access. The fields exist in the child object's memory, but the child's code cannot name them."
+      "remediation_suggestion": "Pedagogical Intervention:\n  Writing class Dog defines what a Dog looks like. No Dog exists in memory until you write new Dog(). How many Dogs exist after class Dog alone? Zero.\nKey Takeaway: A class occupies no runtime memory for instances until instantiated."
     }
   }
 }

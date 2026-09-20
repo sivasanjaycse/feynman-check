@@ -1,16 +1,13 @@
 {
   "student_id": "2023101001",
   "concept_id": "oop_lecture_1",
-  "lecture_id": null,
-  "iteration_count": 3,
-  "initial_text": "When I write 'class Dog', that creates a Dog instance in memory ready to use.",
+  "lecture_id": "oop_lecture_1",
+  "iteration_count": 1,
+  "initial_text": "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
   "probes_issued": [
-    "Can anyone live in a blueprint? How many Dogs exist before 'new Dog()' is called?"
+    "If declaring 'class Car' allocated memory on the heap, how much memory would be allocated before you ever instantiate it?"
   ],
-  "student_revisions": [
-    "I thought defining the class allocated the object fields immediately.",
-    "So a class alone creates the object without calling new."
-  ],
+  "student_revisions": [],
   "final_verdict": "UNRESOLVED_ESCALATE",
   "tagged_fallacy": "CLASS_IS_AN_OBJECT"
 }

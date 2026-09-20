@@ -4,28 +4,74 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Feynman Check — Dashboard</title>
-  <meta name="description" content="Select a lecture to start your Socratic revision session">
-  <link rel="stylesheet" href="/static/style.css">
+  <title>Feynman Check — Course Catalog</title>
+  <meta name="description" content="Select an Object-Oriented Programming lecture to begin Socratic concept revision.">
+  <link rel="stylesheet" href="/static/style.css?v=2.6">
+  <script>
+    (function() {
+      const saved = localStorage.getItem("fc_theme");
+      if (saved === "light" || (!saved && window.matchMedia("(prefers-color-scheme: light)").matches)) {
+        document.documentElement.setAttribute("data-theme", "light");
+      }
+    })();
+  </script>
+  <script src="/static/theme.js" defer></script>
 </head>
 
 <body>
   <div class="dashboard-container">
-    <div class="dashboard-header">
-      <div>
-        <h1>📚 OOP Revision</h1>
-      </div>
-      <div class="user-info">
-        <span class="name">👋 {{STUDENT_NAME}} ({{STUDENT_ROLL}})</span>
-        <a href="/logout" class="logout-btn" id="logout-btn">Logout</a>
-      </div>
-    </div>
 
-    <p class="section-title">Choose a lecture to revise</p>
+    <!-- Top Navigation Bar -->
+    <header class="top-navbar">
+      <div class="nav-breadcrumbs">
+        <span>CS3301 OOAD</span>
+        <span>/</span>
+        <strong>Course Revision Catalog</strong>
+      </div>
+      <div class="user-profile-badge">
+        <div class="user-info">
+          <div class="user-name">{{STUDENT_NAME}}</div>
+          <div class="user-roll">Roll: {{STUDENT_ROLL}}</div>
+        </div>
+        <div class="top-right-nav">
+          <button class="btn-icon theme-toggle-icon" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme" id="theme-toggle-btn">
+            <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <a href="/logout" class="btn-icon" id="logout-btn" title="Log Out" aria-label="Log Out">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </a>
+        </div>
+      </div>
+    </header>
 
-    <div class="lecture-grid">
+    <!-- Dashboard Hero -->
+    <section class="dashboard-hero">
+      <h2>Select a Lecture for Socratic Revision</h2>
+      <p>Engage in a diagnostic dialogue to verify invariant understanding and surface potential mental fallacies.</p>
+    </section>
+
+    <!-- 7 OOP Lecture Cards Grid -->
+    <main class="lecture-grid" id="lecture-grid">
       {{LECTURE_CARDS}}
-    </div>
+    </main>
+
   </div>
 
   <script>
@@ -34,22 +80,26 @@
         const res = await fetch('/api/lectures');
         const lectures = await res.json();
         if (!Array.isArray(lectures) || lectures.length === 0) return;
-        const grid = document.querySelector('.lecture-grid');
+        const grid = document.getElementById('lecture-grid');
         if (!grid) return;
         grid.innerHTML = lectures.map(lec => `
           <a href="/chat/${lec.id}" class="lecture-card" id="card-${lec.id}">
-            <div class="lecture-num">Lecture ${lec.num}</div>
+            <div class="lecture-meta-row">
+              <span class="lecture-num">Lecture ${lec.num}</span>
+              <span class="badge badge-blue">OOP Core</span>
+            </div>
             <div class="lecture-title">${lec.title}</div>
             <div class="lecture-desc">${lec.desc || ''}</div>
-            <div class="lecture-action">Start Revision →</div>
+            <div class="lecture-card-footer">
+              <span class="action-link">Start Revision &rarr;</span>
+            </div>
           </a>
         `).join('');
       } catch (e) {
-        // Fallback to server-rendered cards
+        // Fallback to server rendered HTML
       }
     }
 
-    // Refresh when tab gains focus or on load
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') {
         refreshDashboardLectures();
@@ -57,5 +107,4 @@
     });
   </script>
 </body>
-
 </html>
