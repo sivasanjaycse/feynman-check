@@ -1,6 +1,63 @@
 {
-  "timestamp": "2026-09-20T00:00:00.000000+00:00",
-  "total_students_scanned": 0,
-  "cluster_count": 0,
-  "clusters": {}
+  "timestamp": "2026-09-20T07:21:19.253376+00:00",
+  "total_students_scanned": 3,
+  "cluster_count": 4,
+  "clusters": {
+    "CLASS_IS_AN_OBJECT": {
+      "fallacy_tag": "CLASS_IS_AN_OBJECT",
+      "occurrence_count": 3,
+      "affected_student_ids": [
+        "2023101001",
+        "2023101002",
+        "2023101006"
+      ],
+      "sample_student_quotes": [
+        "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
+        "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
+        "Class is  a object",
+        "class is object",
+        "class in object"
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero.\nKey Takeaway: Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero."
+    },
+    "PRIVATE_MEMBERS_INHERITED": {
+      "fallacy_tag": "PRIVATE_MEMBERS_INHERITED",
+      "occurrence_count": 2,
+      "affected_student_ids": [
+        "2023101001",
+        "2023101002"
+      ],
+      "sample_student_quotes": [
+        "Since Dog extends Animal, Dog can access Animal's private fields directly without getters.",
+        "Subclasses inherit everything including private variables, so child class methods can modify private parent variables..."
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  If private members were accessible in subclasses, the private keyword would provide no encapsulation. Any internal refactoring of the parent would silently break the child's direct field access. The fields exist in the child object's memory, but the child's code cannot name them.\nKey Takeaway: If private members were accessible in subclasses, the private keyword would provide no encapsulation. Any internal refactoring of the parent would silently break the child's direct field access. The fields exist in the child object's memory, but the child's code cannot name them."
+    },
+    "INHERITANCE_IS_CODE_REUSE_ONLY": {
+      "fallacy_tag": "INHERITANCE_IS_CODE_REUSE_ONLY",
+      "occurrence_count": 2,
+      "affected_student_ids": [
+        "2023101001",
+        "2023101002"
+      ],
+      "sample_student_quotes": [
+        "I use inheritance whenever two classes share common utility methods just to avoid copying code.",
+        "Inheritance is primarily a shortcut for code reuse between classes so we don't rewrite functions."
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  If Stack extends ArrayList just to reuse add(), a Stack IS NOT an ArrayList. Callers can use get(index) on a Stack, breaking the Stack's LIFO contract. This violates the Liskov Substitution Principle.\nKey Takeaway: If Stack extends ArrayList just to reuse add(), a Stack IS NOT an ArrayList. Callers can use get(index) on a Stack, breaking the Stack's LIFO contract. This violates the Liskov Substitution Principle."
+    },
+    "OVERLOADING_EQUALS_OVERRIDING": {
+      "fallacy_tag": "OVERLOADING_EQUALS_OVERRIDING",
+      "occurrence_count": 2,
+      "affected_student_ids": [
+        "2023101001",
+        "2023101002"
+      ],
+      "sample_student_quotes": [
+        "When I define add(int a) and add(double a) in the same class with different parameters, that is method overriding.",
+        "Overloading and overriding are essentially the same polymorphism mechanism, just with different argument types."
+      ],
+      "remediation_suggestion": "Pedagogical Intervention:\n  Overloading is two different methods sharing a name in the SAME class, resolved by the compiler. Overriding is a child class replacing a parent method, resolved at runtime. If they were the same, why would the language have two different words?\nKey Takeaway: Overloading is two different methods sharing a name in the SAME class, resolved by the compiler. Overriding is a child class replacing a parent method, resolved at runtime. If they were the same, why would the language have two different words?"
+    }
+  }
 }

@@ -318,9 +318,40 @@ async def chat_api(request: Request):
         latest_probe = store.latest(session_id, "probe")
         latest_verdict = store.latest(session_id, "verdict")
 
-        # Check for batch escalation if session finished
+        # Check for batch escalation on any turn where a misconception is detected
         escalation_report = None
-        if final_state == RunState.COMPLETE:
+        has_flaw = latest_verdict and (
+            latest_verdict.get("detected_flaw_tag")
+            or latest_verdict.get("verdict") == "MISCONCEPTION"
+        )
+        if has_flaw:
+            from demo.feynman.batch import StudentSessionRecord, load_concept_fallacies_from_markdown
+            known_fallacies = list(load_concept_fallacies_from_markdown(lecture_id).keys())
+            default_fallacy = known_fallacies[0] if known_fallacies else "CORE_MISCONCEPTION"
+            raw_tag = latest_verdict.get("detected_flaw_tag")
+            tag = str(raw_tag).strip().upper() if raw_tag else default_fallacy
+
+            probe_text = latest_probe.get("counter_example_scenario", "") if latest_probe else ""
+            student_roll = student["roll"]
+            student_file = ROOT / "data" / "students" / f"{student_roll}_{lecture_id}.json"
+            rec = StudentSessionRecord(
+                student_id=student_roll,
+                concept_id=lecture_id,
+                iteration_count=len(store.history(session_id, "chat_message")),
+                initial_text=message,
+                probes_issued=[probe_text] if probe_text else [],
+                student_revisions=[],
+                final_verdict="UNRESOLVED_ESCALATE",
+                tagged_fallacy=tag,
+            )
+            student_file.parent.mkdir(parents=True, exist_ok=True)
+            student_file.write_text(rec.model_dump_json(indent=2), encoding="utf-8")
+
+            try:
+                escalation_report = check_and_escalate_batch()
+            except Exception as e:
+                print(f"[ESCALATION ERROR] {e}")
+        elif final_state == RunState.COMPLETE:
             try:
                 escalation_report = check_and_escalate_batch()
             except Exception:
@@ -505,62 +536,13 @@ def _build_inspector_telemetry(
 
 @app.post("/api/reset-demo-cohort")
 def reset_demo_cohort():
-    """Resets the demo cohort to Alice & Bob with CLASS_IS_AN_OBJECT for the live escalation demo."""
-    students_dir = ROOT / "data" / "students"
-    students_dir.mkdir(parents=True, exist_ok=True)
-    for f in students_dir.glob("*.json"):
-        f.unlink(missing_ok=True)
-
-    # Seed Alice (2023101001)
-    (students_dir / "2023101001.json").write_text(json.dumps({
-        "student_id": "2023101001",
-        "concept_id": "oop_lecture_1",
-        "lecture_id": "oop_lecture_1",
-        "iteration_count": 1,
-        "initial_text": "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
-        "probes_issued": [
-            "If declaring 'class Car' allocated memory on the heap, how much memory would be allocated before you ever instantiate it?"
-        ],
-        "student_revisions": [],
-        "final_verdict": "UNRESOLVED_ESCALATE",
-        "tagged_fallacy": "CLASS_IS_AN_OBJECT"
-    }, indent=2), encoding="utf-8")
-
-    # Seed Bob (2023101002)
-    (students_dir / "2023101002.json").write_text(json.dumps({
-        "student_id": "2023101002",
-        "concept_id": "oop_lecture_1",
-        "lecture_id": "oop_lecture_1",
-        "iteration_count": 1,
-        "initial_text": "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
-        "probes_issued": [
-            "If class Dog created an object immediately, what would new Dog() do, and how many dogs exist before writing new?"
-        ],
-        "student_revisions": [],
-        "final_verdict": "UNRESOLVED_ESCALATE",
-        "tagged_fallacy": "CLASS_IS_AN_OBJECT"
-    }, indent=2), encoding="utf-8")
-
-    # Reset telemetry
-    (ROOT / "data" / "batch_telemetry.json").write_text(json.dumps({
-        "timestamp": "2026-09-20T04:35:00.000000+00:00",
-        "total_students_scanned": 2,
-        "cluster_count": 1,
-        "clusters": {
-            "CLASS_IS_AN_OBJECT": {
-                "fallacy_tag": "CLASS_IS_AN_OBJECT",
-                "occurrence_count": 2,
-                "affected_student_ids": ["2023101001", "2023101002"],
-                "sample_student_quotes": [
-                    "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
-                    "Writing class Dog creates an actual Dog object in RAM immediately when the code runs."
-                ],
-                "remediation_suggestion": "Pedagogical Intervention:\n  Writing class Dog defines what a Dog looks like. No Dog exists in memory until you write new Dog(). How many Dogs exist after class Dog alone? Zero.\nKey Takeaway: A class occupies no runtime memory for instances until instantiated."
-            }
-        }
-    }, indent=2), encoding="utf-8")
-
-    return JSONResponse({"status": "success", "message": "Demo cohort reset to 2 students with CLASS_IS_AN_OBJECT"})
+    """Resets the demo cohort with Alice & Bob pre-seeded across 4 OOP lectures."""
+    from seed_cohort import seed_cohort
+    seed_cohort()
+    return JSONResponse({
+        "status": "success",
+        "message": "Demo cohort reset: Alice & Bob pre-seeded across 4 OOP lectures (2 students each, threshold = 3).",
+    })
 
 
 # ---------------------------------------------------------------------------
@@ -612,7 +594,7 @@ def api_instructor(request: Request):
     # Read batch telemetry
     telemetry_file = Path("data/batch_telemetry.json")
     clusters = {}
-    total_scanned = len(students)
+    total_scanned = len(set(s.get("student_id") for s in students if s.get("student_id")))
     if telemetry_file.exists():
         try:
             t_data = json.loads(telemetry_file.read_text(encoding="utf-8"))

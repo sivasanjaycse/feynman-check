@@ -1,0 +1,12 @@
+{
+  "student_id": "2023101002",
+  "concept_id": "oop_lecture_1",
+  "iteration_count": 1,
+  "initial_text": "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
+  "probes_issued": [
+    "If class Dog created an object immediately, what would new Dog() do, and how many dogs exist before writing new?"
+  ],
+  "student_revisions": [],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "CLASS_IS_AN_OBJECT"
+}

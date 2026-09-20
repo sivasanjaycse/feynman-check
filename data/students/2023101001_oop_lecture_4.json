@@ -1,0 +1,12 @@
+{
+  "student_id": "2023101001",
+  "concept_id": "oop_lecture_4",
+  "iteration_count": 1,
+  "initial_text": "When I define add(int a) and add(double a) in the same class with different parameters, that is method overriding.",
+  "probes_issued": [
+    "Overriding replaces a parent method in a subclass at runtime. Is add(int) vs add(double) in the same class decided by the compiler or at runtime?"
+  ],
+  "student_revisions": [],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "OVERLOADING_EQUALS_OVERRIDING"
+}

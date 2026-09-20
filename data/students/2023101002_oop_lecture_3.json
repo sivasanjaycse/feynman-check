@@ -1,0 +1,12 @@
+{
+  "student_id": "2023101002",
+  "concept_id": "oop_lecture_3",
+  "iteration_count": 1,
+  "initial_text": "Inheritance is primarily a shortcut for code reuse between classes so we don't rewrite functions.",
+  "probes_issued": [
+    "Would you say a Car IS-A Engine, or does a Car HAS-A Engine? When should composition be preferred?"
+  ],
+  "student_revisions": [],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "INHERITANCE_IS_CODE_REUSE_ONLY"
+}

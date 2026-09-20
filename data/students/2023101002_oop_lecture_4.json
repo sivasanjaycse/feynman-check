@@ -1,0 +1,12 @@
+{
+  "student_id": "2023101002",
+  "concept_id": "oop_lecture_4",
+  "iteration_count": 1,
+  "initial_text": "Overloading and overriding are essentially the same polymorphism mechanism, just with different argument types.",
+  "probes_issued": [
+    "Which one requires an inheritance relationship between classes, and which one happens within a single class?"
+  ],
+  "student_revisions": [],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "OVERLOADING_EQUALS_OVERRIDING"
+}

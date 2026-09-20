@@ -449,10 +449,11 @@ def aggregate_cohort_telemetry(
             f"Review lecture invariants for {concept_id.replace('_', ' ').title()} regarding {tag}.",
         )
 
+        distinct_students = list(dict.fromkeys(r.student_id for r in group_records))
         cluster = BatchMisconceptionCluster(
             fallacy_tag=tag,
-            occurrence_count=len(group_records),
-            affected_student_ids=[r.student_id for r in group_records],
+            occurrence_count=len(distinct_students),
+            affected_student_ids=distinct_students,
             sample_student_quotes=quotes[:5],
             remediation_suggestion=suggestion,
         )
@@ -463,7 +464,7 @@ def aggregate_cohort_telemetry(
         out_path.parent.mkdir(parents=True, exist_ok=True)
         telemetry_payload = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "total_students_scanned": len(records),
+            "total_students_scanned": len(set(r.student_id for r in records)),
             "cluster_count": len(clusters),
             "clusters": {k: v.model_dump() for k, v in clusters.items()},
         }

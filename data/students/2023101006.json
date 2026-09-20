@@ -1,0 +1,19 @@
+{
+  "student_id": "2023101006",
+  "concept_id": "oop_lecture_1",
+  "lecture_id": null,
+  "iteration_count": 3,
+  "initial_text": "Class is  a object",
+  "probes_issued": [
+    "If writing `class Dog` alone already created a Dog, what would that Dog's `speed` field be before any `new Dog()` call? How can a blueprint have field values?",
+    "If `class Dog` alone created a Dog, how many Dogs exist in memory — and where would their `speed` field values come from since no `new` was called?",
+    "If `class Dog` alone created a Dog, where would its field values come from — and how many Dogs would exist after writing `class Dog` five times?"
+  ],
+  "student_revisions": [
+    "class is object",
+    "class in object",
+    "5 dogs\nbecause calls is object"
+  ],
+  "final_verdict": "UNRESOLVED_ESCALATE",
+  "tagged_fallacy": "CLASS_IS_AN_OBJECT"
+}
