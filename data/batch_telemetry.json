@@ -1,22 +1,18 @@
 {
-  "timestamp": "2026-09-20T07:21:19.253376+00:00",
+  "timestamp": "2026-09-20T07:32:19.643874+00:00",
   "total_students_scanned": 3,
   "cluster_count": 4,
   "clusters": {
     "CLASS_IS_AN_OBJECT": {
       "fallacy_tag": "CLASS_IS_AN_OBJECT",
-      "occurrence_count": 3,
+      "occurrence_count": 2,
       "affected_student_ids": [
         "2023101001",
-        "2023101002",
-        "2023101006"
+        "2023101002"
       ],
       "sample_student_quotes": [
         "A class and an object are basically the same thing in memory; declaring class Car creates the car in the heap.",
-        "Writing class Dog creates an actual Dog object in RAM immediately when the code runs.",
-        "Class is  a object",
-        "class is object",
-        "class in object"
+        "Writing class Dog creates an actual Dog object in RAM immediately when the code runs."
       ],
       "remediation_suggestion": "Pedagogical Intervention:\n  Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero.\nKey Takeaway: Writing `class Dog` defines what a Dog looks like. No Dog exists in memory until you write `new Dog()`. How many Dogs exist after `class Dog` alone? Zero."
     },
