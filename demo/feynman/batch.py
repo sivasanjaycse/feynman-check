@@ -31,8 +31,12 @@ from .schema import (
 )
 from .stub import CANNED_CLUSTER, CANNED_ESCALATION_REPORT
 
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
 # ---------------------------------------------------------------------------
-# Architecture Constants
+# Architecture Constants & Brevo SMTP Defaults
 # ---------------------------------------------------------------------------
 BATCH_ALERT_THRESHOLD: int = 3
 DEFAULT_STUDENTS_DIR: Path = Path("data/students")
@@ -41,23 +45,131 @@ DEFAULT_TELEMETRY_PATH: Path = Path("data/batch_telemetry.json")
 DEFAULT_REPORTS_DIR: Path = Path("reports")
 DEFAULT_PROMPTS_DIR: Path = Path("demo/feynman/prompts")
 
+DEFAULT_SENDER_EMAIL: str = "sivasanjaidisco@gmail.com"
+DEFAULT_FACULTY_EMAIL: str = "sivasanjayofficial@gmail.com"
+DEFAULT_BREVO_SMTP_SERVER: str = "smtp-relay.brevo.com"
+DEFAULT_BREVO_SMTP_PORT: int = 587
+DEFAULT_BREVO_SMTP_LOGIN: str = "ba29a1001@smtp-brevo.com"
+
 
 # ---------------------------------------------------------------------------
-# Mock Email Sender — Replace with real SMTP for production
+# Real Brevo SMTP Email Sender
 # ---------------------------------------------------------------------------
 
 def send_email(
     subject: str,
     body: str,
-    recipient: str = "professor@university.edu",
-) -> None:
-    """Mock email sender — prints to terminal. Replace with real SMTP for production."""
+    recipient: Optional[str] = None,
+    sender: Optional[str] = None,
+    html_body: Optional[str] = None,
+) -> bool:
+    """
+    Sends real instructor alert email via Brevo SMTP relay.
+    Sender: sivasanjaidisco@gmail.com (or BREVO_SMTP_FROM env var).
+    Default recipient: sivasanjayofficial@gmail.com (or FACULTY_EMAIL env var).
+    Falls back gracefully if network is unavailable or credentials missing.
+    """
+    try:
+        from slice.config import load_env
+        load_env()
+    except Exception:
+        pass
+
+    target_recipient = (
+        recipient
+        or os.getenv("FACULTY_EMAIL")
+        or DEFAULT_FACULTY_EMAIL
+    ).strip()
+
+    smtp_server = os.getenv("BREVO_SMTP_SERVER", DEFAULT_BREVO_SMTP_SERVER).strip()
+    smtp_port = int(os.getenv("BREVO_SMTP_PORT", str(DEFAULT_BREVO_SMTP_PORT)))
+    smtp_login = os.getenv("BREVO_SMTP_LOGIN", DEFAULT_BREVO_SMTP_LOGIN).strip()
+    smtp_key = os.getenv("BREVO_SMTP_KEY", "").strip()
+    from_sender = (
+        sender
+        or os.getenv("BREVO_SMTP_FROM")
+        or DEFAULT_SENDER_EMAIL
+    ).strip()
+
     print("\n" + "=" * 70)
-    print(f"\033[1;33m📧 EMAIL SENT TO: {recipient}\033[0m")
-    print(f"\033[1m📋 SUBJECT: {subject}\033[0m")
+    print(f"\033[1;33m[EMAIL] DISPATCHING REAL EMAIL TO: {target_recipient}\033[0m")
+    print(f"\033[1m[SUBJECT]: {subject}\033[0m")
+    print(f"[SMTP RELAY]: {smtp_server}:{smtp_port} (Auth: {smtp_login})")
     print("-" * 70)
     print(body)
     print("=" * 70 + "\n")
+
+    if not smtp_key:
+        print("\033[1;31m[WARN] BREVO_SMTP_KEY missing in environment; email dispatch skipped.\033[0m\n")
+        return False
+
+    try:
+        msg = MIMEMultipart("alternative")
+        msg["Subject"] = subject
+        msg["From"] = f"Feynman Check Agent <{from_sender}>"
+        msg["To"] = target_recipient
+
+        # Plain text alternative
+        part_text = MIMEText(body, "plain", "utf-8")
+        msg.attach(part_text)
+
+        # Styled HTML alternative
+        if not html_body:
+            escaped_body = (
+                body.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\n", "<br>")
+            )
+            html_content = f"""<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {{ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; background-color: #0f172a; margin: 0; padding: 24px; color: #f1f5f9; }}
+  .container {{ max-width: 620px; margin: 0 auto; background: #1e293b; border-radius: 12px; border: 1px solid #334155; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.5); }}
+  .header {{ background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: #ffffff; padding: 24px 28px; }}
+  .header h1 {{ margin: 0; font-size: 20px; font-weight: 800; letter-spacing: -0.02em; }}
+  .badge {{ display: inline-block; background: #ef4444; color: #ffffff; padding: 4px 10px; border-radius: 9999px; font-size: 11px; font-weight: 700; margin-top: 8px; letter-spacing: 0.05em; }}
+  .content {{ padding: 28px; font-size: 14px; line-height: 1.65; color: #cbd5e1; }}
+  .box {{ background: #0f172a; border-left: 4px solid #6366f1; padding: 16px 18px; margin: 16px 0; border-radius: 0 8px 8px 0; font-family: monospace; font-size: 13px; color: #e2e8f0; }}
+  .footer {{ background: #111827; border-top: 1px solid #1e293b; padding: 16px 28px; font-size: 12px; color: #64748b; text-align: center; }}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Feynman Check - Instructor Escalation Alert</h1>
+    <span class="badge">COHORT MISCONCEPTION THRESHOLD BREACHED</span>
+  </div>
+  <div class="content">
+    <p>An automated misconception alert was triggered for faculty review:</p>
+    <div class="box">
+      {escaped_body}
+    </div>
+  </div>
+  <div class="footer">
+    Dispatched via Brevo SMTP to <strong>{target_recipient}</strong> | Feynman Check Pedagogical Agent
+  </div>
+</div>
+</body>
+</html>"""
+            part_html = MIMEText(html_content, "html", "utf-8")
+        else:
+            part_html = MIMEText(html_body, "html", "utf-8")
+        msg.attach(part_html)
+
+        with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
+            server.starttls()
+            server.login(smtp_login, smtp_key)
+            server.send_message(msg)
+
+        print(f"\033[1;32m[OK] REAL EMAIL SUCCESSFULLY SENT TO {target_recipient} via Brevo SMTP!\033[0m\n")
+        return True
+    except Exception as e:
+        print(f"\033[1;31m[ERROR] Error sending email via Brevo SMTP: {e}\033[0m\n")
+        return False
+
 
 # Curated offline fallback knowledge base for instant demo execution
 FALLACY_KNOWLEDGE_BASE: Dict[str, Dict[str, str]] = {
@@ -600,6 +712,7 @@ def check_and_escalate_batch(
     threshold: int = BATCH_ALERT_THRESHOLD,
     interactive: bool = False,
     call_llm: Optional[Callable] = None,
+    recipient: Optional[str] = None,
 ) -> Optional[ProfessorEscalationReport]:
     """
     Hook called automatically by demo/feynman/flow.py:log_student_session_state.
@@ -626,7 +739,7 @@ def check_and_escalate_batch(
 
         # --- send_email() when threshold is reached ---
         email_subject = (
-            f"[CONCEPT GAP ALERT] {cluster.fallacy_tag} — "
+            f"[CONCEPT GAP ALERT] {cluster.fallacy_tag} -- "
             f"{cluster.occurrence_count} students affected"
         )
         student_list = ", ".join(cluster.affected_student_ids)
@@ -643,9 +756,9 @@ def check_and_escalate_batch(
             f"Suggested Remediation:\n{cluster.remediation_suggestion}\n\n"
             f"This alert was automatically generated when {cluster.occurrence_count} "
             f"or more students exhibited the same fallacy (threshold = {threshold}).\n\n"
-            f"— Feynman Check Agent"
+            f"-- Feynman Check Agent"
         )
-        send_email(subject=email_subject, body=email_body)
+        send_email(subject=email_subject, body=email_body, recipient=recipient)
 
         if interactive:
             report = escalate_to_professor(report, mode="cli")

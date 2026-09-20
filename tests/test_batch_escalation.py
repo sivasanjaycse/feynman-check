@@ -25,9 +25,11 @@ from demo.feynman.batch import (
     generate_instructor_alert,
     get_concept_fallacy_info,
     load_concept_fallacies_from_markdown,
+    DEFAULT_FACULTY_EMAIL,
     run_batch_pipeline,
     save_student_session,
     scan_student_records,
+    send_email,
 )
 from demo.feynman.schema import (
     BatchMisconceptionCluster,
@@ -271,7 +273,8 @@ class TestPipelineEndToEnd:
         assert reports[0].status == "ACKNOWLEDGED"
         assert (reports_dir / "INSTRUCTOR_ALERT.md").exists()
 
-    def test_check_and_escalate_batch_hook(self, temp_workspace):
+    @patch("demo.feynman.batch.send_email")
+    def test_check_and_escalate_batch_hook(self, mock_send_email, temp_workspace):
         students_dir = temp_workspace["students_dir"]
 
         # Commit 3 records
@@ -294,6 +297,10 @@ class TestPipelineEndToEnd:
         assert mock_ctx.append.called
         call_args = mock_ctx.append.call_args[0]
         assert call_args[0] == "escalation_report"
+        assert mock_send_email.called
+        email_kwargs = mock_send_email.call_args.kwargs
+        assert "[CONCEPT GAP ALERT]" in email_kwargs.get("subject", "")
+        assert "TLB_MISS_EQUALS_DISK_IO" in email_kwargs.get("subject", "")
 
 
 class TestDynamicConceptSupport:
@@ -367,4 +374,64 @@ class TestDynamicConceptSupport:
         assert report.cluster.remediation_suggestion == "Dynamically generated 2-minute lecture intervention by LLM."
         report_text = report_path.read_text(encoding="utf-8")
         assert "Dynamically generated 2-minute lecture intervention by LLM." in report_text
+
+
+class TestRealEmailSender:
+    def test_default_faculty_email_address(self):
+        assert DEFAULT_FACULTY_EMAIL == "sivasanjayofficial@gmail.com"
+
+    @patch("os.getenv")
+    def test_send_email_missing_key(self, mock_getenv):
+        def fake_getenv(k, default=""):
+            if k == "BREVO_SMTP_KEY":
+                return ""
+            return default
+        mock_getenv.side_effect = fake_getenv
+
+        success = send_email(subject="Test Subject", body="Test Body")
+        assert success is False
+
+    @patch("smtplib.SMTP")
+    @patch.dict("os.environ", {
+        "BREVO_SMTP_KEY": "fake_test_key_12345",
+        "BREVO_SMTP_SERVER": "smtp-relay.brevo.com",
+        "BREVO_SMTP_PORT": "587",
+        "BREVO_SMTP_LOGIN": "ba29a1001@smtp-brevo.com",
+        "BREVO_SMTP_FROM": "sivasanjaidisco@gmail.com",
+        "FACULTY_EMAIL": "sivasanjayofficial@gmail.com",
+    })
+    def test_send_email_mocked_smtp_success(self, mock_smtp_cls):
+        mock_smtp_instance = MagicMock()
+        mock_smtp_cls.return_value.__enter__.return_value = mock_smtp_instance
+
+        success = send_email(
+            subject="Alert: Misconception Found",
+            body="Students conflated TLB miss with disk IO",
+        )
+
+        assert success is True
+        mock_smtp_cls.assert_called_with("smtp-relay.brevo.com", 587, timeout=15)
+        mock_smtp_instance.starttls.assert_called_once()
+        mock_smtp_instance.login.assert_called_once_with("ba29a1001@smtp-brevo.com", "fake_test_key_12345")
+        assert mock_smtp_instance.send_message.called
+        sent_msg = mock_smtp_instance.send_message.call_args[0][0]
+        assert sent_msg["Subject"] == "Alert: Misconception Found"
+        assert sent_msg["To"] == "sivasanjayofficial@gmail.com"
+        assert "sivasanjaidisco@gmail.com" in sent_msg["From"]
+
+    @patch("smtplib.SMTP")
+    @patch.dict("os.environ", {
+        "BREVO_SMTP_KEY": "fake_test_key_12345",
+    })
+    def test_send_email_smtp_exception(self, mock_smtp_cls):
+        mock_smtp_cls.side_effect = ConnectionRefusedError("Connection refused by SMTP host")
+
+        success = send_email(
+            subject="Failing Alert",
+            body="Should handle error gracefully",
+            recipient="sivasanjayofficial@gmail.com",
+        )
+
+        assert success is False
+
 

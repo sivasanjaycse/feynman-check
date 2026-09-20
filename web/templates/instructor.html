@@ -147,13 +147,21 @@
       background: rgba(99, 102, 241, 0.03);
       transition: all 0.2s ease;
     }
-    .dropzone-box:hover, .dropzone-box.drag-over {
+
+    .dropzone-box:hover,
+    .dropzone-box.drag-over {
       border-color: var(--accent);
       background: rgba(99, 102, 241, 0.1);
     }
+
     @keyframes spin {
-      0% { transform: rotate(0deg); }
-      100% { transform: rotate(360deg); }
+      0% {
+        transform: rotate(0deg);
+      }
+
+      100% {
+        transform: rotate(360deg);
+      }
     }
   </style>
 </head>
@@ -168,6 +176,9 @@
         </p>
       </div>
       <div>
+        <button onclick="testSendEmail()" id="btn-test-email" class="btn-secondary"
+          style="margin-right: 8px; padding: 8px 14px; font-size: 0.85rem; border-color: rgba(99, 102, 241, 0.4); color: #a5b4fc;">📧
+          Test Brevo Email</button>
         <a href="/instructor/logout" class="btn-secondary" style="margin-right: 8px;">Logout</a>
         <button onclick="loadData()" class="btn-primary" style="padding: 8px 16px; font-size: 0.85rem;">🔄
           Refresh</button>
@@ -195,61 +206,82 @@
     </div>
 
     <!-- Upload New Lecture Card (PDF / PPTX) -->
-    <div class="stat-card" style="margin-bottom: 24px; padding: 22px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
+    <div class="stat-card"
+      style="margin-bottom: 24px; padding: 22px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.7), rgba(15, 23, 42, 0.8)); border: 1px solid rgba(99, 102, 241, 0.35); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);">
       <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14px;">
         <div>
           <h2 style="font-size: 1.2rem; margin: 0; display: flex; align-items: center; gap: 8px;">
             <span>📤</span> Upload New Lecture (PDF / PPTX)
           </h2>
           <p style="color: var(--text-muted); font-size: 0.85rem; margin: 6px 0 0 0;">
-            Upload lecture notes or slide deck. The agent extracts content, synthesizes ground-truth invariants, runs the Fallacy Discovery Agent, and publishes a new revision clipboard to the student dashboard.
+            Upload lecture notes or slide deck. The agent extracts content, synthesizes ground-truth invariants, runs
+            the Fallacy Discovery Agent, and publishes a new revision clipboard to the student dashboard.
           </p>
         </div>
-        <span class="badge" style="background: rgba(99, 102, 241, 0.2); color: var(--accent-light); border: 1px solid var(--accent); font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AUTO-INGEST</span>
+        <span class="badge"
+          style="background: rgba(99, 102, 241, 0.2); color: var(--accent-light); border: 1px solid var(--accent); font-weight: 700; padding: 4px 10px; border-radius: 12px; font-size: 0.75rem;">AUTO-INGEST</span>
       </div>
 
-      <form id="lecture-upload-form" onsubmit="event.preventDefault(); submitLectureUpload();" style="display: flex; flex-direction: column; gap: 14px;">
+      <form id="lecture-upload-form" onsubmit="event.preventDefault(); submitLectureUpload();"
+        style="display: flex; flex-direction: column; gap: 14px;">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 14px;">
           <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE TITLE *</label>
+            <label
+              style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE
+              TITLE *</label>
             <input type="text" id="upload-title" placeholder="e.g., Binary Search Trees & AVL Trees" required
               style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
           </div>
           <div>
-            <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">SHORT DESCRIPTION</label>
+            <label
+              style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">SHORT
+              DESCRIPTION</label>
             <input type="text" id="upload-desc" placeholder="e.g., BST invariants, rotation mechanisms, balance factor"
               style="width: 100%; padding: 10px 14px; border-radius: 8px; background: var(--bg-primary); border: 1px solid var(--border-color); color: var(--text-primary); font-size: 0.9rem;">
           </div>
         </div>
 
         <div>
-          <label style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE FILE (.pdf or .pptx) *</label>
+          <label
+            style="display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 6px; font-weight: 600;">LECTURE
+            FILE (.pdf or .pptx) *</label>
           <div id="dropzone" class="dropzone-box" onclick="document.getElementById('upload-file').click();">
-            <input type="file" id="upload-file" accept=".pdf,.pptx" style="display: none;" onchange="handleFileSelected(this)">
+            <input type="file" id="upload-file" accept=".pdf,.pptx" style="display: none;"
+              onchange="handleFileSelected(this)">
             <div id="dropzone-prompt">
               <div style="font-size: 2rem; margin-bottom: 6px;">📑</div>
-              <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 600;">Click to browse or drag & drop lecture file here</div>
-              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports PDF (.pdf) or PowerPoint (.pptx) slide decks</div>
+              <div style="font-size: 0.95rem; color: var(--text-primary); font-weight: 600;">Click to browse or drag &
+                drop lecture file here</div>
+              <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">Supports PDF (.pdf) or
+                PowerPoint (.pptx) slide decks</div>
             </div>
-            <div id="file-info" style="display: none; font-size: 0.95rem; color: var(--accent-light); font-weight: 600;"></div>
+            <div id="file-info"
+              style="display: none; font-size: 0.95rem; color: var(--accent-light); font-weight: 600;"></div>
           </div>
         </div>
 
-        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
-          <label style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
-            <input type="checkbox" id="upload-run-discovery" checked style="accent-color: var(--accent); width: 16px; height: 16px;">
+        <div
+          style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; margin-top: 4px;">
+          <label
+            style="display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-secondary); cursor: pointer;">
+            <input type="checkbox" id="upload-run-discovery" checked
+              style="accent-color: var(--accent); width: 16px; height: 16px;">
             <span>Run <strong>Fallacy Discovery Agent</strong> during upload to create Section 2 & Section 5</span>
           </label>
-          <button type="submit" id="upload-btn" class="btn-primary" style="padding: 10px 22px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
+          <button type="submit" id="upload-btn" class="btn-primary"
+            style="padding: 10px 22px; font-size: 0.9rem; font-weight: 600; display: flex; align-items: center; gap: 8px;">
             <span>⚡</span> Ingest & Publish Lecture
           </button>
         </div>
       </form>
 
       <!-- Progress / Loading Status -->
-      <div id="upload-progress-box" style="display: none; margin-top: 18px; padding: 14px 18px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.35);">
+      <div id="upload-progress-box"
+        style="display: none; margin-top: 18px; padding: 14px 18px; background: rgba(99, 102, 241, 0.1); border-radius: 8px; border: 1px solid rgba(99, 102, 241, 0.35);">
         <div style="display: flex; align-items: center; gap: 12px;">
-          <div style="width: 22px; height: 22px; border: 3px solid rgba(99, 102, 241, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;"></div>
+          <div
+            style="width: 22px; height: 22px; border: 3px solid rgba(99, 102, 241, 0.3); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; flex-shrink: 0;">
+          </div>
           <span id="upload-progress-text" style="font-size: 0.88rem; color: var(--text-primary); font-weight: 500;">
             Extracting slides/pages and synthesizing invariants with Fallacy Discovery Agent...
           </span>
@@ -257,7 +289,9 @@
       </div>
 
       <!-- Result View -->
-      <div id="upload-result-box" style="display: none; margin-top: 18px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);"></div>
+      <div id="upload-result-box"
+        style="display: none; margin-top: 18px; padding: 16px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color);">
+      </div>
     </div>
 
     <!-- Fallacy Discovery Agent Card -->
@@ -376,7 +410,7 @@
 
               ${isTriggered ? `
                 <div class="email-box">
-📧 <strong>AUTOMATED EMAIL DISPATCHED TO: professor@university.edu</strong>
+📧 <strong>AUTOMATED REAL EMAIL DISPATCHED TO: ${data.faculty_email || 'sivasanjayofficial@gmail.com'}</strong>
 📋 <strong>SUBJECT:</strong> [CONCEPT GAP ALERT] ${tag} — ${count} students affected
 --------------------------------------------------------------------------------
 Dear Professor,
@@ -652,6 +686,27 @@ Key Remediation: ${c.remediation_suggestion}
       } finally {
         btn.disabled = false;
         progBox.style.display = 'none';
+      }
+    }
+
+    async function testSendEmail() {
+      const btn = document.getElementById('btn-test-email');
+      const originalText = btn.textContent;
+      btn.disabled = true;
+      btn.textContent = '⏳ Dispatching...';
+      try {
+        const res = await fetch('/api/instructor/test-email', { method: 'POST' });
+        const data = await res.json();
+        if (res.ok) {
+          alert('✅ ' + (data.message || 'Email dispatched successfully!'));
+        } else {
+          alert('❌ ' + (data.message || 'Failed to dispatch email.'));
+        }
+      } catch (err) {
+        alert('❌ Error dispatching test email: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = originalText;
       }
     }
 

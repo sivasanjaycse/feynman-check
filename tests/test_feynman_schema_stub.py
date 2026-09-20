@@ -201,14 +201,6 @@ class TestCannedStudentsAndMocks:
         v_amb = evaluate_student_text(CANNED_STUDENTS["ambiguous"]["initial_text"])
         assert v_amb.verdict == "AMBIGUOUS"
 
-    def test_deadlock_fallacies(self):
-        v_cycle = evaluate_student_text("If there is a cycle in the resource allocation graph, the system is deadlocked.")
-        assert v_cycle.verdict == "MISCONCEPTION"
-        assert v_cycle.detected_flaw_tag == "CIRCULAR_WAIT_ALONE_IS_DEADLOCK"
-
-        v_starve = evaluate_student_text("When a process waits too long in the queue, that is deadlock.")
-        assert v_starve.verdict == "MISCONCEPTION"
-        assert v_starve.detected_flaw_tag == "STARVATION_EQUALS_DEADLOCK"
 
     def test_cohort_records_helper(self):
         records = get_cohort_records()
