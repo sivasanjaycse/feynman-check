@@ -623,7 +623,7 @@ def api_instructor(request: Request):
     # Count reports in reports/
     reports_dir = Path("reports")
     alerts_count = len(list(reports_dir.glob("*.md"))) if reports_dir.exists() else 0
-    faculty_email = os.getenv("FACULTY_EMAIL", DEFAULT_FACULTY_EMAIL).strip()
+    faculty_email = (os.getenv("FACULTY_EMAIL") or os.getenv("FACULTY_MAIL") or DEFAULT_FACULTY_EMAIL).strip()
 
     return JSONResponse({
         "total_students": total_scanned,
@@ -642,7 +642,7 @@ def api_test_email(request: Request):
     if not _get_instructor(request):
         return JSONResponse({"error": "Unauthorized"}, status_code=401)
 
-    faculty_email = os.getenv("FACULTY_EMAIL", DEFAULT_FACULTY_EMAIL).strip()
+    faculty_email = (os.getenv("FACULTY_EMAIL") or os.getenv("FACULTY_MAIL") or DEFAULT_FACULTY_EMAIL).strip()
     sender_email = os.getenv("BREVO_SMTP_FROM", DEFAULT_SENDER_EMAIL).strip()
     subject = "[Feynman Check] Live Brevo SMTP Test Verification"
     body = (

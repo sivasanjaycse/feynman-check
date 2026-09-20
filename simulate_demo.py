@@ -21,6 +21,7 @@ import os
 import sys
 import time
 from pathlib import Path
+from typing import Optional
 
 # Ensure project root is in sys.path
 ROOT = Path(__file__).resolve().parent
@@ -53,15 +54,24 @@ def print_banner():
 def run_simulation(
     concept_id: str = "oop_lecture_1",
     fallacy_tag: str = "CLASS_IS_AN_OBJECT",
-    target_recipient: str = DEFAULT_FACULTY_EMAIL,
-    target_sender: str = DEFAULT_SENDER_EMAIL,
+    target_recipient: Optional[str] = None,
+    target_sender: Optional[str] = None,
     fast: bool = False,
 ):
     print_banner()
 
     delay = 0.0 if fast else 0.8
-    recipient = (target_recipient or os.getenv("FACULTY_EMAIL", DEFAULT_FACULTY_EMAIL)).strip()
-    sender = (target_sender or os.getenv("BREVO_SMTP_FROM", DEFAULT_SENDER_EMAIL)).strip()
+    recipient = (
+        target_recipient
+        or os.getenv("FACULTY_EMAIL")
+        or os.getenv("FACULTY_MAIL")
+        or DEFAULT_FACULTY_EMAIL
+    ).strip()
+    sender = (
+        target_sender
+        or os.getenv("BREVO_SMTP_FROM")
+        or DEFAULT_SENDER_EMAIL
+    ).strip()
 
     print(f"[*] Target Lecture Concept : {concept_id}")
     print(f"[*] Target Misconception   : {fallacy_tag}")
@@ -187,13 +197,13 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--recipient",
-        default=DEFAULT_FACULTY_EMAIL,
-        help="Faculty recipient email (default: sivasanjayofficial@gmail.com)",
+        default=None,
+        help="Faculty recipient email (defaults to FACULTY_EMAIL in .env)",
     )
     parser.add_argument(
         "--sender",
-        default=DEFAULT_SENDER_EMAIL,
-        help="Sender email address (default: sivasanjaidisco@gmail.com)",
+        default=None,
+        help="Sender email address (defaults to BREVO_SMTP_FROM in .env)",
     )
     parser.add_argument(
         "--fast",

@@ -35,6 +35,7 @@ def test_brevo_mail(recipient: str | None = None, sender: str | None = None):
     target_recipient = (
         recipient
         or os.getenv("FACULTY_EMAIL")
+        or os.getenv("FACULTY_MAIL")
         or "sivasanjayofficial@gmail.com"
     ).strip()
 

@@ -263,6 +263,7 @@ class TestPipelineEndToEnd:
         clusters, reports = run_batch_pipeline(
             student_dir=students_dir,
             reports_dir=reports_dir,
+            telemetry_path=temp_workspace["telemetry_file"],
             threshold=3,
             action="A",
         )
@@ -288,6 +289,8 @@ class TestPipelineEndToEnd:
         report = check_and_escalate_batch(
             ctx=mock_ctx,
             student_dir=students_dir,
+            reports_dir=temp_workspace["reports_dir"],
+            telemetry_path=temp_workspace["telemetry_file"],
             threshold=3,
             interactive=False,
         )

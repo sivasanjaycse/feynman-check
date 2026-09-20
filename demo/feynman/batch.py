@@ -78,6 +78,7 @@ def send_email(
     target_recipient = (
         recipient
         or os.getenv("FACULTY_EMAIL")
+        or os.getenv("FACULTY_MAIL")
         or DEFAULT_FACULTY_EMAIL
     ).strip()
 
@@ -709,6 +710,8 @@ def escalate_to_professor(
 def check_and_escalate_batch(
     ctx: Any = None,
     student_dir: Path | str = DEFAULT_STUDENTS_DIR,
+    reports_dir: Path | str = DEFAULT_REPORTS_DIR,
+    telemetry_path: Path | str = DEFAULT_TELEMETRY_PATH,
     threshold: int = BATCH_ALERT_THRESHOLD,
     interactive: bool = False,
     call_llm: Optional[Callable] = None,
@@ -720,7 +723,9 @@ def check_and_escalate_batch(
     and generates instructor alerts if threshold is reached.
     """
     records = scan_student_records(student_dir)
-    clusters = aggregate_cohort_telemetry(records, student_dir=student_dir)
+    clusters = aggregate_cohort_telemetry(
+        records, student_dir=student_dir, output_file=telemetry_path
+    )
     breached = check_escalation_threshold(clusters, threshold=threshold)
 
     if not breached:
@@ -728,7 +733,9 @@ def check_and_escalate_batch(
 
     latest_report: Optional[ProfessorEscalationReport] = None
     for cluster in breached:
-        report, _ = generate_instructor_alert(cluster, call_llm=call_llm)
+        report, _ = generate_instructor_alert(
+            cluster, reports_dir=reports_dir, call_llm=call_llm
+        )
 
         if ctx is not None and hasattr(ctx, "append"):
             ctx.append(
@@ -776,6 +783,7 @@ def run_batch_pipeline(
     records: Optional[List[StudentSessionRecord]] = None,
     student_dir: Path | str = DEFAULT_STUDENTS_DIR,
     reports_dir: Path | str = DEFAULT_REPORTS_DIR,
+    telemetry_path: Path | str = DEFAULT_TELEMETRY_PATH,
     threshold: int = BATCH_ALERT_THRESHOLD,
     action: Optional[str] = None,
     call_llm: Optional[Callable] = None,
@@ -783,7 +791,9 @@ def run_batch_pipeline(
     """
     Orchestrates the entire batch aggregation and escalation pipeline.
     """
-    clusters = aggregate_cohort_telemetry(records, student_dir=student_dir)
+    clusters = aggregate_cohort_telemetry(
+        records, student_dir=student_dir, output_file=telemetry_path
+    )
     breached = check_escalation_threshold(clusters, threshold=threshold)
 
     reports: List[ProfessorEscalationReport] = []
