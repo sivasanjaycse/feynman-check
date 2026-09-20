@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Feynman Check — Course Catalog</title>
   <meta name="description" content="Select an Object-Oriented Programming lecture to begin Socratic concept revision.">
-  <link rel="stylesheet" href="/static/style.css?v=2.3">
+  <link rel="stylesheet" href="/static/style.css?v=2.5">
   <script>
     (function() {
       const saved = localStorage.getItem("fc_theme");
@@ -29,15 +29,35 @@
         <strong>Course Revision Catalog</strong>
       </div>
       <div class="user-profile-badge">
-        <button class="theme-toggle-btn" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme">
-          <span class="theme-icon">☀️</span>
-          <span class="theme-toggle-text">Light</span>
-        </button>
         <div class="user-info">
           <div class="user-name">{{STUDENT_NAME}}</div>
           <div class="user-roll">Roll: {{STUDENT_ROLL}}</div>
         </div>
-        <a href="/logout" class="btn-secondary" id="logout-btn">Log Out</a>
+        <div class="top-right-nav">
+          <button class="btn-icon theme-toggle-icon" onclick="toggleTheme()" title="Switch Color Theme" aria-label="Toggle light/dark theme" id="theme-toggle-btn">
+            <svg class="theme-icon-sun" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="5"></circle>
+              <line x1="12" y1="1" x2="12" y2="3"></line>
+              <line x1="12" y1="21" x2="12" y2="23"></line>
+              <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line>
+              <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line>
+              <line x1="1" y1="12" x2="3" y2="12"></line>
+              <line x1="21" y1="12" x2="23" y2="12"></line>
+              <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line>
+              <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line>
+            </svg>
+            <svg class="theme-icon-moon" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+          </button>
+          <a href="/logout" class="btn-icon" id="logout-btn" title="Log Out" aria-label="Log Out">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+              <polyline points="16 17 21 12 16 7"></polyline>
+              <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
+          </a>
+        </div>
       </div>
     </header>
 

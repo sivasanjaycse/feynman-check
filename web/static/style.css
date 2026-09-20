@@ -210,6 +210,64 @@ body::before {
   border-color: var(--border-strong);
 }
 
+/* Icon Button Utility */
+.btn-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-decoration: none;
+  transition: var(--transition);
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.btn-icon:hover {
+  background: var(--bg-surface-elevated);
+  border-color: var(--border-strong);
+  color: var(--text-primary);
+}
+
+.btn-icon:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn-icon svg {
+  display: block;
+  pointer-events: none;
+}
+
+.theme-icon-sun {
+  display: block;
+}
+
+.theme-icon-moon {
+  display: none;
+}
+
+[data-theme="light"] .theme-icon-sun {
+  display: none;
+}
+
+[data-theme="light"] .theme-icon-moon {
+  display: block;
+}
+
+.top-right-nav {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+
 .badge {
   display: inline-flex;
   align-items: center;
@@ -2144,3 +2202,278 @@ body::before {
   background: #fef2f2;
   border-color: #f87171;
 }
+
+/* ============================================================
+   Landing Page & Integrated Login Experience
+   ============================================================ */
+
+.landing-page-container {
+  max-width: 1240px;
+  margin: 0 auto;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  padding: 0 2rem 2.5rem 2rem;
+  position: relative;
+  z-index: 1;
+}
+
+.landing-navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.25rem 0;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: 2.75rem;
+  gap: 1.5rem;
+}
+
+.landing-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-decoration: none;
+}
+
+.landing-brand-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.landing-brand-text .title {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.landing-brand-text .subtitle {
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+}
+
+.landing-main-grid {
+  display: grid;
+  grid-template-columns: 1.18fr 0.82fr;
+  gap: 3.5rem;
+  align-items: start;
+  flex: 1;
+}
+
+@media (max-width: 960px) {
+  .landing-main-grid {
+    grid-template-columns: 1fr;
+    gap: 2.5rem;
+  }
+}
+
+.landing-hero-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.hero-pill-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--bg-surface-elevated);
+  border: 1px solid var(--border-default);
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  margin-bottom: 1.25rem;
+  width: fit-content;
+}
+
+.hero-pill-badge .pulse-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.landing-hero-title {
+  font-size: clamp(2rem, 3.2vw, 2.75rem);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  margin-bottom: 1.15rem;
+}
+
+.landing-hero-title span.highlight {
+  color: var(--accent);
+}
+
+.landing-hero-lead {
+  font-size: 1.02rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+  max-width: 620px;
+}
+
+.value-props-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.value-prop-item {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 1rem 1.2rem;
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  transition: var(--transition);
+}
+
+.value-prop-item:hover {
+  border-color: var(--border-default);
+  background: var(--bg-surface-elevated);
+}
+
+.value-prop-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--accent);
+  font-weight: 700;
+  font-size: 0.82rem;
+  font-family: var(--font-mono);
+}
+
+.value-prop-content h3 {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 3px;
+}
+
+.value-prop-content p {
+  font-size: 0.82rem;
+  line-height: 1.5;
+  color: var(--text-muted);
+}
+
+.curriculum-scope-box {
+  background: var(--bg-surface-subtle);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  padding: 1.2rem 1.4rem;
+}
+
+.curriculum-scope-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.curriculum-scope-title {
+  font-size: 0.76rem;
+  font-family: var(--font-mono);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.curriculum-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.curriculum-tag {
+  font-size: 0.75rem;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  border: 1px solid var(--border-default);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+}
+
+.landing-login-col {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.landing-login-col .login-card {
+  max-width: 480px;
+  width: 100%;
+}
+
+.landing-footer {
+  margin-top: 3.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+/* Light Mode Overrides for Landing Page */
+[data-theme="light"] .hero-pill-badge {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .value-prop-item {
+  background: #ffffff;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .value-prop-item:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+[data-theme="light"] .value-prop-icon {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #2563eb;
+}
+
+[data-theme="light"] .curriculum-scope-box {
+  background: #f8fafc;
+  border-color: #e2e8f0;
+}
+
+[data-theme="light"] .curriculum-tag {
+  background: #ffffff;
+  border-color: #cbd5e1;
+  color: #334155;
+}
+
+[data-theme="light"] .landing-navbar {
+  border-bottom-color: #e2e8f0;
+}
+
+[data-theme="light"] .landing-footer {
+  border-top-color: #e2e8f0;
+}
+

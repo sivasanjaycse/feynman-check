@@ -27,14 +27,12 @@ function toggleTheme() {
 
 function updateThemeToggleLabels(theme) {
   const isLight = theme === "light";
-  const buttons = document.querySelectorAll(".theme-toggle-btn");
-  buttons.forEach((btn) => {
-    const iconEl = btn.querySelector(".theme-icon");
+  const title = isLight ? "Switch to Dark Mode" : "Switch to Light Mode";
+  document.querySelectorAll(".theme-toggle-btn, .theme-toggle-icon, #theme-toggle-btn").forEach((btn) => {
+    btn.setAttribute("title", title);
+    btn.setAttribute("aria-label", title);
     const textEl = btn.querySelector(".theme-toggle-text");
-    if (iconEl) iconEl.textContent = isLight ? "🌙" : "☀️";
     if (textEl) textEl.textContent = isLight ? "Dark" : "Light";
-    btn.setAttribute("title", isLight ? "Switch to Dark Mode" : "Switch to Light Mode");
-    btn.setAttribute("aria-label", isLight ? "Switch to Dark Mode" : "Switch to Light Mode");
   });
 }
 
