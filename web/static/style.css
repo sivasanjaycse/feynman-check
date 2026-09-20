@@ -1409,6 +1409,10 @@ body::before {
   gap: 16px;
 }
 
+.instructor-hero {
+  margin-bottom: 2rem;
+}
+
 .instructor-brand-area {
   display: flex;
   flex-direction: column;
