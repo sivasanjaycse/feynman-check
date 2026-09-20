@@ -60,6 +60,14 @@ _static_dir = Path(__file__).parent / "static"
 _static_dir.mkdir(exist_ok=True)
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
 
+
+@app.middleware("http")
+async def add_cache_control_header(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.startswith("/static"):
+        response.headers["Cache-Control"] = "no-cache, must-revalidate"
+    return response
+
 # ---------------------------------------------------------------------------
 # Demo Students (hardcoded — this is a hackathon demo)
 # ---------------------------------------------------------------------------
